@@ -25,7 +25,6 @@
                 <p class="text-xs text-slate-500 mt-1">Pembukuan Bersama Suami & Istri</p>
             </div>
 
-            <!-- Login Form -->
             <div id="loginFormContainer">
                 <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
                     <div>
@@ -43,7 +42,6 @@
                 </div>
             </div>
 
-            <!-- Register Form -->
             <div id="registerFormContainer" class="hidden">
                 <form id="registerForm" onsubmit="handleRegister(event)" class="space-y-4">
                     <div>
@@ -150,15 +148,15 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm">
-                        <p class="text-xs font-semibold text-slate-400 uppercase">Total Pemasukan</p>
+                        <p class="text-xs font-semibold text-slate-400 uppercase">Total Pemasukan (Periode)</p>
                         <p id="dashIncome" class="text-xl font-bold text-emerald-600 mt-1">Rp 0</p>
                     </div>
                     <div class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm">
-                        <p class="text-xs font-semibold text-slate-400 uppercase">Total Pengeluaran</p>
+                        <p class="text-xs font-semibold text-slate-400 uppercase">Total Pengeluaran (Periode)</p>
                         <p id="dashExpense" class="text-xl font-bold text-rose-600 mt-1">Rp 0</p>
                     </div>
                     <div class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm">
-                        <p class="text-xs font-semibold text-slate-400 uppercase">Bersih (Sisa Saldo)</p>
+                        <p class="text-xs font-semibold text-slate-400 uppercase">Total Saldo Seluruh Rekening/Dompet</p>
                         <p id="dashBalance" class="text-xl font-bold text-indigo-600 mt-1">Rp 0</p>
                     </div>
                 </div>
@@ -214,7 +212,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Keterangan Khusus</label>
-                            <input type="text" id="txNote" placeholder="Tuliskan keterangan (misal: Tarik Tunai BCA ke Cash, Top Up OVO, Beli Bakso)..." class="w-full text-xs border rounded-lg p-2.5 outline-none">
+                            <input type="text" id="txNote" placeholder="Tuliskan keterangan..." class="w-full text-xs border rounded-lg p-2.5 outline-none">
                         </div>
                         <button type="submit" id="submitBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs px-6 py-2.5 rounded-lg flex items-center justify-center gap-2">
                             <span>Simpan Transaksi</span>
@@ -222,7 +220,6 @@
                     </form>
                 </div>
 
-                <!-- GRAFIK DENGAN KONTROL LENGKAP -->
                 <div class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm space-y-4">
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b pb-3 border-slate-100">
                         <h3 class="text-sm font-bold text-slate-700">Grafik Pengeluaran per Kategori</h3>
@@ -393,7 +390,6 @@
 
     <!-- JAVASCRIPT LOGIC -->
     <script>
-        // URL GOOGLE APPS SCRIPT ANDA
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyrw13jWnNxP8Qn6WEmAha_eE2-oY4rkYtj_jmzI_YdY-WP1jkaNTfynDwaDVZ6abviDw/exec";
 
         const DEFAULT_EXPENSE_CATEGORIES = [
@@ -602,7 +598,6 @@
                 savings.map(s => `<option value="${s.id}">${s.name} (Saldo: Rp ${s.current.toLocaleString('id-ID')})</option>`).join('');
         }
 
-        // FUNGSI UTAMA PENAMBAHAN TRANSAKSI (LOKAL + GOOGLE SHEETS)
         function handleAddTransaction(e) {
             e.preventDefault();
             const type = document.getElementById('txType').value;
@@ -687,7 +682,7 @@
             populateSavingOptions();
             updateDashboard();
 
-            // KIRIM SECARA OTOMATIS KE GOOGLE SHEETS DI BACKGROUND
+            // SINKRONISASI KE GOOGLE SHEETS
             const sheetPayload = {
                 action: "addTransaction",
                 id: txId,
@@ -775,9 +770,12 @@
             const totalIncome = filteredTx.filter(t => t.type === 'INCOME').reduce((acc, t) => acc + t.amount, 0);
             const totalExpense = filteredTx.filter(t => t.type === 'EXPENSE').reduce((acc, t) => acc + t.amount, 0);
 
+            // RUMUS PERBAIKAN: TOTAL SISA SALDO DARI SELURUH REKENING/DOMPET
+            const totalCurrentWalletBalance = wallets.reduce((acc, w) => acc + w.balance, 0);
+
             document.getElementById('dashIncome').textContent = `Rp ${totalIncome.toLocaleString('id-ID')}`;
             document.getElementById('dashExpense').textContent = `Rp ${totalExpense.toLocaleString('id-ID')}`;
-            document.getElementById('dashBalance').textContent = `Rp ${(totalIncome - totalExpense).toLocaleString('id-ID')}`;
+            document.getElementById('dashBalance').textContent = `Rp ${totalCurrentWalletBalance.toLocaleString('id-ID')}`;
 
             const tbody = document.getElementById('txTableBody');
             tbody.innerHTML = filteredTx.map(t => {
@@ -1126,6 +1124,7 @@
             saveData();
             renderWallets();
             populateWalletOptions();
+            updateDashboard();
             document.getElementById('editWalletId').value = '';
             document.getElementById('walName').value = '';
             document.getElementById('walBalance').value = '';
@@ -1148,6 +1147,7 @@
             saveData();
             renderWallets();
             populateWalletOptions();
+            updateDashboard();
         }
 
         function renderWallets() {
