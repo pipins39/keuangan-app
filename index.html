@@ -100,6 +100,9 @@
                     <button onclick="switchTab('wallets')" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-800 text-left">
                         <i class="fa-solid fa-building-columns w-5 text-purple-400"></i> Kelola Dompet
                     </button>
+                    <button onclick="switchTab('categories')" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-800 text-left">
+                        <i class="fa-solid fa-tags w-5 text-teal-400"></i> Kelola Kategori
+                    </button>
                     <button onclick="switchTab('account')" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-800 text-left">
                         <i class="fa-solid fa-user-gear w-5 text-rose-400"></i> Pengaturan Akun
                     </button>
@@ -124,7 +127,6 @@
                         <h1 class="text-xl font-bold text-slate-800">Ringkasan & Pencatatan Transaksi</h1>
                         <p class="text-xs text-slate-500">Monitoring bulanan dan analisis pengeluaran keluarga</p>
                     </div>
-                    <!-- Filter Pemilik, Waktu (Bulan & Tahun Spesifik / Semua Waktu) -->
                     <div class="flex flex-wrap items-center gap-2">
                         <select id="filterOwner" onchange="updateDashboard()" class="text-xs border rounded-lg px-2.5 py-1.5 bg-white shadow-sm outline-none">
                             <option value="ALL">Semua Pemilik (Suami + Istri)</option>
@@ -132,10 +134,11 @@
                             <option value="Istri">Hanya Istri</option>
                         </select>
                         <select id="filterPeriodType" onchange="togglePeriodControls('dash'); updateDashboard();" class="text-xs border rounded-lg px-2.5 py-1.5 bg-white shadow-sm outline-none">
-                            <option value="MONTH">Bulan Spesifik</option>
+                            <option value="THIS_MONTH" selected>Bulan Ini</option>
+                            <option value="SPECIFIC_MONTH">Bulan Spesifik</option>
                             <option value="ALL">Semua Waktu</option>
                         </select>
-                        <div id="dashMonthYearContainer" class="flex gap-1">
+                        <div id="dashMonthYearContainer" class="hidden flex gap-1">
                             <select id="filterMonth" onchange="updateDashboard()" class="text-xs border rounded-lg px-2 py-1.5 bg-white shadow-sm outline-none"></select>
                             <select id="filterYear" onchange="updateDashboard()" class="text-xs border rounded-lg px-2 py-1.5 bg-white shadow-sm outline-none"></select>
                         </div>
@@ -161,14 +164,15 @@
                 </div>
 
                 <div class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm space-y-4">
-                    <h3 class="text-sm font-bold text-slate-700">Catat Transaksi Baru</h3>
+                    <h3 class="text-sm font-bold text-slate-700">Catat Transaksi Baru / Transfer Dana</h3>
                     <form onsubmit="handleAddTransaction(event)" class="space-y-4">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">Jenis Transaksi</label>
-                                <select id="txType" onchange="populateCategoryOptions()" required class="w-full text-xs border rounded-lg p-2.5 outline-none">
+                                <select id="txType" onchange="handleTxTypeChange()" required class="w-full text-xs border rounded-lg p-2.5 outline-none">
                                     <option value="EXPENSE">Pengeluaran</option>
                                     <option value="INCOME">Pemasukan</option>
+                                    <option value="TRANSFER">Pindah Dana / Transfer (Top Up e-Wallet, Tarik Tunai)</option>
                                 </select>
                             </div>
                             <div>
@@ -183,29 +187,34 @@
                                 <input type="number" id="txAmount" required placeholder="0" class="w-full text-xs border rounded-lg p-2.5 outline-none">
                             </div>
                         </div>
+
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <div>
+                            <div id="txCategoryBox">
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">Kategori</label>
-                                <select id="txCategory" required class="w-full text-xs border rounded-lg p-2.5 outline-none"></select>
+                                <select id="txCategory" class="w-full text-xs border rounded-lg p-2.5 outline-none"></select>
                             </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">Sumber Dompet/Rekening</label>
+                            <div id="txWalletBox">
+                                <label id="txWalletLabel" class="block text-xs font-semibold text-slate-600 mb-1">Sumber Dompet/Rekening</label>
                                 <select id="txWallet" required class="w-full text-xs border rounded-lg p-2.5 outline-none"></select>
                             </div>
-                            <div>
+                            <div id="txTargetWalletBox" class="hidden">
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Dompet Tujuan (Transfer ke)</label>
+                                <select id="txTargetWallet" class="w-full text-xs border rounded-lg p-2.5 outline-none"></select>
+                            </div>
+                            <div id="txSavingBox">
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">Pos Tabungan (Opsional)</label>
                                 <select id="txSaving" class="w-full text-xs border rounded-lg p-2.5 outline-none">
                                     <option value="">-- Tanpa Pos Tabungan --</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">Waktu (Tanggal & Jam)</label>
-                                <input type="datetime-local" id="txDateTime" required class="w-full text-xs border rounded-lg p-2.5 outline-none">
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Tanggal Transaksi</label>
+                                <input type="date" id="txDate" required class="w-full text-xs border rounded-lg p-2.5 outline-none">
                             </div>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Keterangan Khusus</label>
-                            <input type="text" id="txNote" placeholder="Tuliskan keterangan (misal: Beli Bakso, Setor Tabungan)..." class="w-full text-xs border rounded-lg p-2.5 outline-none">
+                            <input type="text" id="txNote" placeholder="Tuliskan keterangan (misal: Tarik Tunai BCA ke Cash, Top Up OVO, Beli Bakso)..." class="w-full text-xs border rounded-lg p-2.5 outline-none">
                         </div>
                         <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs px-6 py-2.5 rounded-lg">
                             Simpan Transaksi
@@ -226,7 +235,7 @@
                         <table class="w-full text-left text-xs text-slate-600">
                             <thead class="bg-slate-50 border-b border-slate-100 uppercase font-semibold text-slate-500">
                                 <tr>
-                                    <th class="p-3">Waktu</th>
+                                    <th class="p-3">Tanggal</th>
                                     <th class="p-3">Pemilik</th>
                                     <th class="p-3">Kategori & Keterangan</th>
                                     <th class="p-3">Dompet</th>
@@ -244,7 +253,7 @@
             <div id="tab-savings" class="tab-content space-y-6 hidden">
                 <div>
                     <h1 class="text-xl font-bold text-slate-800">Tabungan & Portofolio Investasi</h1>
-                    <p class="text-xs text-slate-500">Saldo tabungan menyesuaikan secara otomatis dengan transaksi pemasukan/pengeluaran</p>
+                    <p class="text-xs text-slate-500">Saldo tabungan menyesuaikan secara otomatis saat alokasi pemasukan atau penarikan dana</p>
                 </div>
                 <form onsubmit="handleAddSavings(event)" class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm space-y-4">
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -281,14 +290,15 @@
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h1 class="text-xl font-bold text-slate-800">Pengaturan Batas Anggaran</h1>
-                        <p class="text-xs text-slate-500">Analisis ketercapaian anggaran berdasarkan Bulan/Tahun. Yellow (>50%), Red (>90%)</p>
+                        <p class="text-xs text-slate-500">Analisis ketercapaian anggaran berdasarkan periode. Yellow (>50%), Red (>90%)</p>
                     </div>
                     <div class="flex items-center gap-2">
                         <select id="budgetPeriodType" onchange="togglePeriodControls('budget'); renderBudgeting();" class="text-xs border rounded-lg px-2.5 py-1.5 bg-white shadow-sm outline-none">
-                            <option value="MONTH">Bulan Spesifik</option>
+                            <option value="THIS_MONTH" selected>Bulan Ini</option>
+                            <option value="SPECIFIC_MONTH">Bulan Spesifik</option>
                             <option value="ALL">Semua Waktu</option>
                         </select>
-                        <div id="budgetMonthYearContainer" class="flex gap-1">
+                        <div id="budgetMonthYearContainer" class="hidden flex gap-1">
                             <select id="budgetMonth" onchange="renderBudgeting()" class="text-xs border rounded-lg px-2 py-1.5 bg-white shadow-sm outline-none"></select>
                             <select id="budgetYear" onchange="renderBudgeting()" class="text-xs border rounded-lg px-2 py-1.5 bg-white shadow-sm outline-none"></select>
                         </div>
@@ -305,14 +315,46 @@
                 </div>
                 <form onsubmit="handleSaveWallet(event)" class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm flex flex-col md:flex-row gap-4">
                     <input type="hidden" id="editWalletId">
-                    <input type="text" id="walName" required placeholder="Nama Dompet (misal: BCA Suami, Mandiri Istri)" class="flex-1 text-xs border rounded-lg p-2.5 outline-none">
+                    <input type="text" id="walName" required placeholder="Nama Dompet (misal: BCA Suami, Mandiri Istri, OVO)" class="flex-1 text-xs border rounded-lg p-2.5 outline-none">
                     <input type="number" id="walBalance" required placeholder="Saldo Awal (Rp)" class="w-full md:w-48 text-xs border rounded-lg p-2.5 outline-none">
                     <button type="submit" id="walletBtn" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium px-6 py-2.5 rounded-lg">Tambah Dompet</button>
                 </form>
                 <div id="walletsList" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
             </div>
 
-            <!-- TAB 5: AKUN -->
+            <!-- TAB 5: KELOLA KATEGORI -->
+            <div id="tab-categories" class="tab-content space-y-6 hidden">
+                <div>
+                    <h1 class="text-xl font-bold text-slate-800">Kelola Daftar Kategori</h1>
+                    <p class="text-xs text-slate-500">Tambah, ubah, atau hapus kategori pengeluaran dan pemasukan</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm space-y-4">
+                        <h3 class="text-sm font-bold text-rose-600 flex items-center gap-2">
+                            <i class="fa-solid fa-tags"></i> Kategori Pengeluaran
+                        </h3>
+                        <div class="flex gap-2">
+                            <input type="text" id="newExpenseCatInput" placeholder="Kategori pengeluaran baru..." class="flex-1 text-xs border rounded-lg p-2 outline-none">
+                            <button onclick="addCategory('EXPENSE')" class="bg-rose-600 hover:bg-rose-700 text-white text-xs px-4 py-2 rounded-lg font-medium">Tambah</button>
+                        </div>
+                        <ul id="expenseCatList" class="divide-y divide-slate-100 text-xs custom-scroll max-h-80 overflow-y-auto"></ul>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm space-y-4">
+                        <h3 class="text-sm font-bold text-emerald-600 flex items-center gap-2">
+                            <i class="fa-solid fa-tags"></i> Kategori Pemasukan
+                        </h3>
+                        <div class="flex gap-2">
+                            <input type="text" id="newIncomeCatInput" placeholder="Kategori pemasukan baru..." class="flex-1 text-xs border rounded-lg p-2 outline-none">
+                            <button onclick="addCategory('INCOME')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-4 py-2 rounded-lg font-medium">Tambah</button>
+                        </div>
+                        <ul id="incomeCatList" class="divide-y divide-slate-100 text-xs custom-scroll max-h-80 overflow-y-auto"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 6: AKUN -->
             <div id="tab-account" class="tab-content space-y-6 hidden">
                 <div>
                     <h1 class="text-xl font-bold text-slate-800">Manajemen Pengguna</h1>
@@ -338,9 +380,9 @@
         </main>
     </div>
 
-    <!-- JAVASCRIPT -->
+    <!-- JAVASCRIPT LOGIC -->
     <script>
-        const EXPENSE_CATEGORIES = [
+        const DEFAULT_EXPENSE_CATEGORIES = [
             "Bahan Makanan & Minuman", "Makanan & Minuman Jadi", "Buah-buahan", "Kontrak/Sewa Rumah",
             "Pemeliharaan Rumah (Cat, Kaca, Lampu, Kran, dll)", "Tagihan (Listrik, PDAM, WiFi)", 
             "Transportasi (Bensin)", "Service Kendaraan (Ganti Oli, Sparepart, dll)", "Gas LPG",
@@ -351,7 +393,7 @@
             "Keperluan Pesta/Upacara", "Sumbangan (Nikahan, Kado)", "Pengeluaran Ortud & Saudara", "Infaq/Sedekah", "Lainnya"
         ];
 
-        const INCOME_CATEGORIES = ["Gaji Pokok", "Tukin", "Uang Makan", "Perjadin", "Uang Lembur", "Lainnya"];
+        const DEFAULT_INCOME_CATEGORIES = ["Gaji Pokok", "Tukin", "Uang Makan", "Perjadin", "Uang Lembur", "Lainnya"];
         const MONTH_NAMES = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
         let currentUser = null;
@@ -360,16 +402,19 @@
         let wallets = JSON.parse(localStorage.getItem('fin_wallets')) || [
             { id: 1, name: "Tunai Keluarga", balance: 1000000 },
             { id: 2, name: "Bank Suami", balance: 5000000 },
-            { id: 3, name: "Bank Istri", balance: 5000000 }
+            { id: 3, name: "Bank Istri", balance: 5000000 },
+            { id: 4, name: "OVO / GoPay", balance: 500000 }
         ];
         let savings = JSON.parse(localStorage.getItem('fin_savings')) || [];
         let budgets = JSON.parse(localStorage.getItem('fin_budgets')) || {};
+        let customExpenseCategories = JSON.parse(localStorage.getItem('fin_exp_cats')) || DEFAULT_EXPENSE_CATEGORIES;
+        let customIncomeCategories = JSON.parse(localStorage.getItem('fin_inc_cats')) || DEFAULT_INCOME_CATEGORIES;
+
         let chartInstance = null;
 
         window.onload = function() {
-            const now = new Date();
-            const localISOTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-            document.getElementById('txDateTime').value = localISOTime;
+            const today = new Date().toISOString().slice(0, 10);
+            document.getElementById('txDate').value = today;
 
             initMonthYearDropdowns();
 
@@ -405,7 +450,7 @@
         function togglePeriodControls(prefix) {
             const type = document.getElementById(`${prefix === 'dash' ? 'filterPeriodType' : 'budgetPeriodType'}`).value;
             const container = document.getElementById(`${prefix === 'dash' ? 'dashMonthYearContainer' : 'budgetMonthYearContainer'}`);
-            container.classList.toggle('hidden', type === 'ALL');
+            container.classList.toggle('hidden', type !== 'SPECIFIC_MONTH');
         }
 
         function saveData() {
@@ -414,6 +459,8 @@
             localStorage.setItem('fin_wallets', JSON.stringify(wallets));
             localStorage.setItem('fin_savings', JSON.stringify(savings));
             localStorage.setItem('fin_budgets', JSON.stringify(budgets));
+            localStorage.setItem('fin_exp_cats', JSON.stringify(customExpenseCategories));
+            localStorage.setItem('fin_inc_cats', JSON.stringify(customIncomeCategories));
         }
 
         function showRegisterForm() {
@@ -496,19 +543,39 @@
             if(tabId === 'savings') renderSavings();
             if(tabId === 'budgeting') renderBudgeting();
             if(tabId === 'wallets') renderWallets();
+            if(tabId === 'categories') renderCategoriesManager();
             if(tabId === 'account') renderUsersTable();
+        }
+
+        function handleTxTypeChange() {
+            const type = document.getElementById('txType').value;
+            const isTransfer = type === 'TRANSFER';
+
+            document.getElementById('txCategoryBox').classList.toggle('hidden', isTransfer);
+            document.getElementById('txSavingBox').classList.toggle('hidden', isTransfer);
+            document.getElementById('txTargetWalletBox').classList.toggle('hidden', !isTransfer);
+
+            document.getElementById('txWalletLabel').textContent = isTransfer ? 'Dompet Asal (Transfer dari)' : 'Sumber Dompet/Rekening';
+
+            if (!isTransfer) {
+                populateCategoryOptions();
+            }
         }
 
         function populateCategoryOptions() {
             const type = document.getElementById('txType').value;
             const categorySelect = document.getElementById('txCategory');
-            const categories = type === 'EXPENSE' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
+            const categories = type === 'EXPENSE' ? customExpenseCategories : customIncomeCategories;
             categorySelect.innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
         }
 
         function populateWalletOptions() {
             const walletSelect = document.getElementById('txWallet');
-            walletSelect.innerHTML = wallets.map(w => `<option value="${w.id}">${w.name} (Rp ${w.balance.toLocaleString('id-ID')})</option>`).join('');
+            const targetSelect = document.getElementById('txTargetWallet');
+
+            const options = wallets.map(w => `<option value="${w.id}">${w.name} (Rp ${w.balance.toLocaleString('id-ID')})</option>`).join('');
+            walletSelect.innerHTML = options;
+            targetSelect.innerHTML = options;
         }
 
         function populateSavingOptions() {
@@ -522,31 +589,72 @@
             const type = document.getElementById('txType').value;
             const owner = document.getElementById('txOwner').value;
             const amount = parseFloat(document.getElementById('txAmount').value);
-            const category = document.getElementById('txCategory').value;
-            const walletId = parseInt(document.getElementById('txWallet').value);
-            const savingId = document.getElementById('txSaving').value ? parseInt(document.getElementById('txSaving').value) : null;
-            const dateTime = document.getElementById('txDateTime').value;
+            const date = document.getElementById('txDate').value;
             const note = document.getElementById('txNote').value;
+            const walletId = parseInt(document.getElementById('txWallet').value);
 
-            const wallet = wallets.find(w => w.id === walletId);
-            if(type === 'EXPENSE' && wallet.balance < amount) {
-                if(!confirm("Saldo dompet ini kurang. Tetap lanjutkan?")) return;
-            }
+            const walletSource = wallets.find(w => w.id === walletId);
 
-            // Update Saldo Dompet
-            if(type === 'EXPENSE') wallet.balance -= amount;
-            else wallet.balance += amount;
-
-            // Update Saldo Pos Tabungan (jika dipilih)
-            if(savingId) {
-                const pos = savings.find(s => s.id === savingId);
-                if(pos) {
-                    if(type === 'INCOME') pos.current += amount;
-                    else pos.current = Math.max(0, pos.current - amount);
+            if (type === 'TRANSFER') {
+                const targetWalletId = parseInt(document.getElementById('txTargetWallet').value);
+                if (walletId === targetWalletId) {
+                    alert("Dompet asal dan dompet tujuan tidak boleh sama!");
+                    return;
                 }
-            }
+                const walletTarget = wallets.find(w => w.id === targetWalletId);
 
-            transactions.unshift({ id: Date.now(), type, owner, amount, category, walletId, savingId, dateTime, note });
+                if (walletSource.balance < amount) {
+                    if (!confirm("Saldo dompet asal kurang. Tetap lanjutkan transfer?")) return;
+                }
+
+                walletSource.balance -= amount;
+                walletTarget.balance += amount;
+
+                transactions.unshift({
+                    id: Date.now(),
+                    type: 'TRANSFER',
+                    owner,
+                    amount,
+                    category: 'Transfer / Mutasi',
+                    walletId,
+                    targetWalletId,
+                    date,
+                    note: note || `Transfer dari ${walletSource.name} ke ${walletTarget.name}`
+                });
+
+            } else {
+                const category = document.getElementById('txCategory').value;
+                const savingId = document.getElementById('txSaving').value ? parseInt(document.getElementById('txSaving').value) : null;
+
+                if (savingId) {
+                    const pos = savings.find(s => s.id === savingId);
+
+                    if (type === 'INCOME') {
+                        if (walletSource.balance < amount) {
+                            if (!confirm("Saldo dompet kurang dari nominal yang disisihkan untuk tabungan. Tetap lanjutkan?")) return;
+                        }
+                        walletSource.balance -= amount;
+                        if (pos) pos.current += amount;
+                    } else {
+                        if (pos && pos.current < amount) {
+                            if (!confirm("Nominal penarikan melebihi saldo pos tabungan ini. Tetap lanjutkan?")) return;
+                        }
+                        if (pos) pos.current = Math.max(0, pos.current - amount);
+                        walletSource.balance += amount;
+                    }
+                } else {
+                    if (type === 'EXPENSE') {
+                        if (walletSource.balance < amount) {
+                            if (!confirm("Saldo dompet ini kurang. Tetap lanjutkan?")) return;
+                        }
+                        walletSource.balance -= amount;
+                    } else {
+                        walletSource.balance += amount;
+                    }
+                }
+
+                transactions.unshift({ id: Date.now(), type, owner, amount, category, walletId, savingId, date, note });
+            }
             
             saveData();
             alert("Transaksi berhasil disimpan!");
@@ -562,18 +670,28 @@
             const txIndex = transactions.findIndex(t => t.id === id);
             if(txIndex > -1) {
                 const tx = transactions[txIndex];
-                const wallet = wallets.find(w => w.id === tx.walletId);
-                if(wallet) {
-                    if(tx.type === 'EXPENSE') wallet.balance += tx.amount;
-                    else wallet.balance -= tx.amount;
-                }
-                if(tx.savingId) {
+                const walletSource = wallets.find(w => w.id === tx.walletId);
+
+                if (tx.type === 'TRANSFER') {
+                    const walletTarget = wallets.find(w => w.id === tx.targetWalletId);
+                    if (walletSource) walletSource.balance += tx.amount;
+                    if (walletTarget) walletTarget.balance -= tx.amount;
+                } else if (tx.savingId) {
                     const pos = savings.find(s => s.id === tx.savingId);
-                    if(pos) {
-                        if(tx.type === 'INCOME') pos.current = Math.max(0, pos.current - tx.amount);
-                        else pos.current += tx.amount;
+                    if (tx.type === 'INCOME') {
+                        if (walletSource) walletSource.balance += tx.amount;
+                        if (pos) pos.current = Math.max(0, pos.current - tx.amount);
+                    } else {
+                        if (walletSource) walletSource.balance -= tx.amount;
+                        if (pos) pos.current += tx.amount;
+                    }
+                } else {
+                    if (walletSource) {
+                        if (tx.type === 'EXPENSE') walletSource.balance += tx.amount;
+                        else walletSource.balance -= tx.amount;
                     }
                 }
+
                 transactions.splice(txIndex, 1);
                 saveData();
                 updateDashboard();
@@ -588,13 +706,20 @@
             const selMonth = parseInt(document.getElementById('filterMonth').value);
             const selYear = parseInt(document.getElementById('filterYear').value);
 
+            const now = new Date();
+            const currentMonthStr = now.toISOString().slice(0, 7);
+
             let filteredTx = transactions.filter(t => {
                 const matchOwner = ownerFilter === 'ALL' || t.owner === ownerFilter;
                 let matchPeriod = true;
 
-                if(periodType === 'MONTH' && t.dateTime) {
-                    const d = new Date(t.dateTime);
-                    matchPeriod = (d.getMonth() === selMonth && d.getFullYear() === selYear);
+                if (t.date) {
+                    if (periodType === 'THIS_MONTH') {
+                        matchPeriod = t.date.startsWith(currentMonthStr);
+                    } else if (periodType === 'SPECIFIC_MONTH') {
+                        const d = new Date(t.date);
+                        matchPeriod = (d.getMonth() === selMonth && d.getFullYear() === selYear);
+                    }
                 }
                 return matchOwner && matchPeriod;
             });
@@ -609,20 +734,38 @@
             const tbody = document.getElementById('txTableBody');
             tbody.innerHTML = filteredTx.map(t => {
                 const wallet = wallets.find(w => w.id === t.walletId);
-                const isExpense = t.type === 'EXPENSE';
-                const formattedTime = t.dateTime ? t.dateTime.replace('T', ' ') : '-';
+                const targetWallet = t.targetWalletId ? wallets.find(w => w.id === t.targetWalletId) : null;
+                const formattedDate = t.date || '-';
+
+                let amountText = `Rp ${t.amount.toLocaleString('id-ID')}`;
+                let amountColor = 'text-slate-700';
+
+                if (t.type === 'EXPENSE') {
+                    amountText = `- Rp ${t.amount.toLocaleString('id-ID')}`;
+                    amountColor = 'text-rose-600';
+                } else if (t.type === 'INCOME') {
+                    amountText = `+ Rp ${t.amount.toLocaleString('id-ID')}`;
+                    amountColor = 'text-emerald-600';
+                } else if (t.type === 'TRANSFER') {
+                    amountText = `↔ Rp ${t.amount.toLocaleString('id-ID')}`;
+                    amountColor = 'text-purple-600';
+                }
+
+                let walletDisplay = wallet ? wallet.name : '-';
+                if (t.type === 'TRANSFER' && targetWallet) {
+                    walletDisplay = `${wallet.name} ➔ ${targetWallet.name}`;
+                }
+
                 return `
                     <tr class="hover:bg-slate-50">
-                        <td class="p-3 text-slate-500">${formattedTime}</td>
+                        <td class="p-3 text-slate-500">${formattedDate}</td>
                         <td class="p-3 font-semibold ${t.owner === 'Suami' ? 'text-indigo-600' : 'text-rose-600'}">${t.owner}</td>
                         <td class="p-3">
                             <div class="font-bold text-slate-800">${t.category}</div>
                             <div class="text-[11px] text-slate-400">${t.note || '-'}</div>
                         </td>
-                        <td class="p-3 text-slate-500">${wallet ? wallet.name : '-'}</td>
-                        <td class="p-3 text-right font-bold ${isExpense ? 'text-rose-600' : 'text-emerald-600'}">
-                            ${isExpense ? '-' : '+'} Rp ${t.amount.toLocaleString('id-ID')}
-                        </td>
+                        <td class="p-3 text-slate-500">${walletDisplay}</td>
+                        <td class="p-3 text-right font-bold ${amountColor}">${amountText}</td>
                         <td class="p-3 text-center">
                             <button onclick="deleteTransaction(${t.id})" class="text-rose-500 hover:text-rose-700">
                                 <i class="fa-solid fa-trash"></i>
@@ -660,6 +803,69 @@
                     plugins: { legend: { display: false } }
                 }
             });
+        }
+
+        function renderCategoriesManager() {
+            const expList = document.getElementById('expenseCatList');
+            const incList = document.getElementById('incomeCatList');
+
+            expList.innerHTML = customExpenseCategories.map((c, idx) => `
+                <li class="py-2 flex items-center justify-between">
+                    <span class="font-medium text-slate-700">${c}</span>
+                    <div class="flex gap-2">
+                        <button onclick="editCategory('EXPENSE', ${idx})" class="text-indigo-600 hover:text-indigo-800"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="deleteCategory('EXPENSE', ${idx})" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </li>
+            `).join('');
+
+            incList.innerHTML = customIncomeCategories.map((c, idx) => `
+                <li class="py-2 flex items-center justify-between">
+                    <span class="font-medium text-slate-700">${c}</span>
+                    <div class="flex gap-2">
+                        <button onclick="editCategory('INCOME', ${idx})" class="text-indigo-600 hover:text-indigo-800"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="deleteCategory('INCOME', ${idx})" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </li>
+            `).join('');
+        }
+
+        function addCategory(type) {
+            const input = document.getElementById(type === 'EXPENSE' ? 'newExpenseCatInput' : 'newIncomeCatInput');
+            const val = input.value.trim();
+            if (!val) return;
+
+            const targetArr = type === 'EXPENSE' ? customExpenseCategories : customIncomeCategories;
+            if (targetArr.includes(val)) {
+                alert("Nama kategori sudah ada!");
+                return;
+            }
+
+            targetArr.push(val);
+            saveData();
+            input.value = '';
+            renderCategoriesManager();
+            populateCategoryOptions();
+        }
+
+        function editCategory(type, idx) {
+            const targetArr = type === 'EXPENSE' ? customExpenseCategories : customIncomeCategories;
+            const newName = prompt("Ubah nama kategori:", targetArr[idx]);
+            if (newName && newName.trim() !== "") {
+                targetArr[idx] = newName.trim();
+                saveData();
+                renderCategoriesManager();
+                populateCategoryOptions();
+            }
+        }
+
+        function deleteCategory(type, idx) {
+            if (!confirm("Yakin ingin menghapus kategori ini?")) return;
+            const targetArr = type === 'EXPENSE' ? customExpenseCategories : customIncomeCategories;
+            targetArr.splice(idx, 1);
+            saveData();
+            renderCategoriesManager();
+            populateCategoryOptions();
         }
 
         function handleAddSavings(e) {
@@ -709,16 +915,25 @@
             const selMonth = parseInt(document.getElementById('budgetMonth').value);
             const selYear = parseInt(document.getElementById('budgetYear').value);
 
-            grid.innerHTML = EXPENSE_CATEGORIES.map(cat => {
+            const now = new Date();
+            const currentMonthStr = now.toISOString().slice(0, 7);
+
+            grid.innerHTML = customExpenseCategories.map(cat => {
                 const limit = budgets[cat] || 0;
                 
                 const spent = transactions
                     .filter(t => {
                         if (t.type !== 'EXPENSE' || t.category !== cat) return false;
                         if (periodType === 'ALL') return true;
-                        if (!t.dateTime) return false;
-                        const d = new Date(t.dateTime);
-                        return d.getMonth() === selMonth && d.getFullYear() === selYear;
+                        if (!t.date) return false;
+
+                        if (periodType === 'THIS_MONTH') {
+                            return t.date.startsWith(currentMonthStr);
+                        } else if (periodType === 'SPECIFIC_MONTH') {
+                            const d = new Date(t.date);
+                            return d.getMonth() === selMonth && d.getFullYear() === selYear;
+                        }
+                        return false;
                     })
                     .reduce((acc, t) => acc + t.amount, 0);
 
@@ -851,9 +1066,9 @@
         }
 
         function exportCSV() {
-            let csv = 'Waktu,Jenis,Pemilik,Kategori,Nominal,Keterangan\n';
+            let csv = 'Tanggal,Jenis,Pemilik,Kategori,Nominal,Keterangan\n';
             transactions.forEach(t => {
-                csv += `"${t.dateTime || ''}","${t.type}","${t.owner}","${t.category}","${t.amount}","${t.note || ''}"\n`;
+                csv += `"${t.date || ''}","${t.type}","${t.owner}","${t.category}","${t.amount}","${t.note || ''}"\n`;
             });
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
