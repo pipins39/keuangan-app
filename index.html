@@ -895,7 +895,12 @@
                                 <h4 class="font-bold text-slate-800 text-sm">${s.name}</h4>
                                 <span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-semibold">${s.owner}</span>
                             </div>
-                            <span class="text-xs font-bold text-amber-600">${percent}%</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold text-amber-600">${percent}%</span>
+                                <button onclick="deleteSaving(${s.id})" class="text-rose-500 hover:text-rose-700 p-1 text-xs" title="Hapus Pos">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                             <div class="bg-amber-500 h-full" style="width: ${percent}%"></div>
@@ -907,6 +912,14 @@
                     </div>
                 `;
             }).join('');
+        }
+
+        function deleteSaving(id) {
+            if(!confirm("Yakin ingin menghapus pos tabungan ini?")) return;
+            savings = savings.filter(s => s.id !== id);
+            saveData();
+            renderSavings();
+            populateSavingOptions();
         }
 
         function renderBudgeting() {
