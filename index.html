@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinanceHub - Pencatatan Keuangan Keluarga</title>
+    <title>FinanceHub - Pencatatan Keuangan Keluarga (Suami & Istri)</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome for Icons -->
@@ -14,7 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
@@ -33,7 +33,7 @@
                     <i class="fa-solid fa-wallet text-3xl"></i>
                 </div>
                 <h1 class="text-2xl font-bold tracking-tight">FinanceHub</h1>
-                <p class="text-slate-400 text-sm mt-1">Kelola Keuangan Keluarga Lebih Teratur</p>
+                <p class="text-slate-400 text-sm mt-1">Kelola Keuangan Keluarga (Suami & Istri)</p>
             </div>
 
             <!-- Login Form -->
@@ -57,8 +57,8 @@
             <!-- Register Form -->
             <form id="register-form" onsubmit="handleRegister(event)" class="space-y-4 hidden">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Nama Lengkap</label>
-                    <input type="text" id="reg-fullname" required class="w-full px-4 py-3 rounded-xl bg-slate-900/60 border border-slate-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" placeholder="Nama Anda">
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Nama Lengkap / Keluarga</label>
+                    <input type="text" id="reg-fullname" required class="w-full px-4 py-3 rounded-xl bg-slate-900/60 border border-slate-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" placeholder="Nama Keluarga Anda">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Username</label>
@@ -86,11 +86,11 @@
                 <div class="flex items-center justify-between h-16">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md">
-                            <i class="fa-solid fa-wallet text-xl"></i>
+                            <i class="fa-solid fa-people-roof text-xl"></i>
                         </div>
                         <div>
                             <span class="font-bold text-lg text-slate-800 tracking-tight">FinanceHub</span>
-                            <span class="hidden sm:inline-block text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md font-medium ml-2">Personal</span>
+                            <span class="hidden sm:inline-block text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md font-medium ml-2">Family & Personal</span>
                         </div>
                     </div>
 
@@ -108,188 +108,257 @@
             </div>
         </header>
 
+        <!-- NAVIGATION TABS -->
+        <div class="bg-white border-b border-slate-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex gap-6 text-sm font-medium text-slate-600">
+                <button id="tab-btn-dashboard" onclick="switchTab('dashboard')" class="py-3.5 border-b-2 border-indigo-600 text-indigo-600 font-semibold flex items-center gap-2">
+                    <i class="fa-solid fa-chart-pie"></i> Ringkasan & Arus Kas
+                </button>
+                <button id="tab-btn-invest" onclick="switchTab('invest')" class="py-3.5 border-b-2 border-transparent hover:text-indigo-600 flex items-center gap-2">
+                    <i class="fa-solid fa-piggy-bank text-emerald-600"></i> Tabungan & Investasi
+                </button>
+            </div>
+        </div>
+
         <!-- MAIN CONTENT CONTAINER -->
         <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
-            <!-- WALLET SUMMARY CARDS -->
-            <section class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Saldo</span>
-                        <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                            <i class="fa-solid fa-vault"></i>
+            <!-- VIEW 1: DASHBOARD -->
+            <div id="view-dashboard" class="space-y-8">
+                <!-- WALLET SUMMARY CARDS -->
+                <section class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Saldo Gabungan</span>
+                            <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                                <i class="fa-solid fa-vault"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div id="total-balance" class="text-2xl font-bold text-slate-900">Rp 0</div>
+                            <p class="text-xs text-slate-400 mt-1">Akumulasi Suami + Istri</p>
                         </div>
                     </div>
-                    <div class="mt-4">
-                        <div id="total-balance" class="text-2xl font-bold text-slate-900">Rp 0</div>
-                        <p class="text-xs text-slate-400 mt-1">Akumulasi seluruh rekening</p>
-                    </div>
-                </div>
 
-                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Dompet Tunai</span>
-                        <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                            <i class="fa-solid fa-money-bill-wave"></i>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-blue-600 uppercase tracking-wider">Sumber: Suami</span>
+                            <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                                <i class="fa-solid fa-mars"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div id="balance-suami" class="text-xl font-bold text-slate-800">Rp 0</div>
+                            <p class="text-xs text-slate-400 mt-1">Net Saldo Suami</p>
                         </div>
                     </div>
-                    <div class="mt-4">
-                        <div id="wallet-cash" class="text-xl font-bold text-slate-800">Rp 0</div>
-                        <p class="text-xs text-slate-400 mt-1">Uang fisik / Cash</p>
-                    </div>
-                </div>
 
-                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Rekening Bank</span>
-                        <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                            <i class="fa-solid fa-building-columns"></i>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-pink-600 uppercase tracking-wider">Sumber: Istri</span>
+                            <div class="w-8 h-8 rounded-lg bg-pink-50 text-pink-600 flex items-center justify-center">
+                                <i class="fa-solid fa-venus"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div id="balance-istri" class="text-xl font-bold text-slate-800">Rp 0</div>
+                            <p class="text-xs text-slate-400 mt-1">Net Saldo Istri</p>
                         </div>
                     </div>
-                    <div class="mt-4">
-                        <div id="wallet-bank" class="text-xl font-bold text-slate-800">Rp 0</div>
-                        <p class="text-xs text-slate-400 mt-1">Tabungan Bank</p>
-                    </div>
-                </div>
 
-                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">e-Wallet</span>
-                        <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
-                            <i class="fa-solid fa-mobile-screen-button"></i>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Rincian Rekening</span>
+                            <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                <i class="fa-solid fa-wallet"></i>
+                            </div>
+                        </div>
+                        <div class="mt-2 text-xs space-y-1 text-slate-600">
+                            <div class="flex justify-between"><span>Tunai:</span> <span id="wallet-cash" class="font-semibold">Rp 0</span></div>
+                            <div class="flex justify-between"><span>Bank:</span> <span id="wallet-bank" class="font-semibold">Rp 0</span></div>
+                            <div class="flex justify-between"><span>e-Wallet:</span> <span id="wallet-ewallet" class="font-semibold">Rp 0</span></div>
                         </div>
                     </div>
-                    <div class="mt-4">
-                        <div id="wallet-ewallet" class="text-xl font-bold text-slate-800">Rp 0</div>
-                        <p class="text-xs text-slate-400 mt-1">Gopay, OVO, ShopeePay, dll</p>
-                    </div>
-                </div>
-            </section>
+                </section>
 
-            <!-- ACTION BUTTONS & QUICK STATS -->
-            <div class="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
-                <div class="flex flex-wrap gap-2">
-                    <button onclick="openTransactionModal('income')" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium text-sm flex items-center gap-2 shadow-sm transition">
-                        <i class="fa-solid fa-plus-circle"></i> Tambah Pemasukan
-                    </button>
-                    <button onclick="openTransactionModal('expense')" class="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-medium text-sm flex items-center gap-2 shadow-sm transition">
-                        <i class="fa-solid fa-minus-circle"></i> Tambah Pengeluaran
-                    </button>
-                    <button onclick="openBudgetModal()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-medium text-sm flex items-center gap-2 shadow-sm transition">
-                        <i class="fa-solid fa-bullseye"></i> Anggaran & Tabungan
-                    </button>
-                </div>
-                <div class="flex items-center gap-2">
-                    <button onclick="exportToCSV()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium text-xs flex items-center gap-1.5 transition">
-                        <i class="fa-solid fa-file-excel text-emerald-600"></i> Ekspor CSV
-                    </button>
-                    <button onclick="window.print()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium text-xs flex items-center gap-1.5 transition">
-                        <i class="fa-solid fa-print text-indigo-600"></i> Cetak Laporan
-                    </button>
-                </div>
-            </div>
-
-            <!-- CHARTS SECTION -->
-            <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="font-bold text-slate-800 flex items-center gap-2">
-                            <i class="fa-solid fa-chart-line text-indigo-600"></i> Pemasukan vs Pengeluaran
-                        </h3>
-                        <span class="text-xs text-slate-400">Trend Transaksi</span>
+                <!-- ACTION BUTTONS & QUICK STATS -->
+                <div class="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="openTransactionModal('income')" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium text-sm flex items-center gap-2 shadow-sm transition">
+                            <i class="fa-solid fa-plus-circle"></i> Tambah Pemasukan
+                        </button>
+                        <button onclick="openTransactionModal('expense')" class="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-medium text-sm flex items-center gap-2 shadow-sm transition">
+                            <i class="fa-solid fa-minus-circle"></i> Tambah Pengeluaran
+                        </button>
+                        <button onclick="openBudgetModal()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-medium text-sm flex items-center gap-2 shadow-sm transition">
+                            <i class="fa-solid fa-bullseye"></i> Batas Anggaran
+                        </button>
                     </div>
-                    <div class="h-64 relative">
-                        <canvas id="monthlyTrendChart"></canvas>
+                    <div class="flex items-center gap-2">
+                        <button onclick="exportToCSV()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium text-xs flex items-center gap-1.5 transition">
+                            <i class="fa-solid fa-file-excel text-emerald-600"></i> Ekspor CSV
+                        </button>
+                        <button onclick="window.print()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium text-xs flex items-center gap-1.5 transition">
+                            <i class="fa-solid fa-print text-indigo-600"></i> Cetak Laporan
+                        </button>
                     </div>
                 </div>
 
-                <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="font-bold text-slate-800 flex items-center gap-2">
-                            <i class="fa-solid fa-chart-pie text-indigo-600"></i> Distribusi Pengeluaran
-                        </h3>
-                        <span class="text-xs text-slate-400">Berdasarkan Kategori</span>
-                    </div>
-                    <div class="h-64 relative flex items-center justify-center">
-                        <canvas id="categoryDistributionChart"></canvas>
-                    </div>
-                </div>
-            </section>
+                <!-- DYNAMIC CHARTS SECTION -->
+                <section class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-6">
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+                                <i class="fa-solid fa-chart-line text-indigo-600"></i> Laporan Grafik Dinamis
+                            </h3>
+                            <p class="text-xs text-slate-500">Filter grafik berdasarkan Pemilik (Suami/Istri), Rentang Waktu, & Kategori</p>
+                        </div>
+                        
+                        <!-- DYNAMIC CHART FILTERS -->
+                        <div class="flex flex-wrap items-center gap-2">
+                            <!-- Pemilik Filter -->
+                            <select id="chart-filter-owner" onchange="renderCharts()" class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-slate-50 focus:ring-2 focus:ring-indigo-500">
+                                <option value="ALL"> Semua Pemilik (Suami & Istri)</option>
+                                <option value="Suami">👨 Sumber: Suami</option>
+                                <option value="Istri">👩 Sumber: Istri</option>
+                            </select>
 
-            <!-- BUDGET & SAVING GOALS SECTION -->
-            <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Category Budgets -->
-                <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+                            <!-- Timeline Filter -->
+                            <select id="chart-filter-timeline" onchange="renderCharts()" class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-slate-50 focus:ring-2 focus:ring-indigo-500">
+                                <option value="monthly">Bulanan (Tahun Ini)</option>
+                                <option value="weekly">Mingguan (4 Minggu Terakhir)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 id="chart-bar-title" class="font-bold text-xs uppercase tracking-wider text-slate-600">Pemasukan vs Pengeluaran</h4>
+                            </div>
+                            <div class="h-64 relative">
+                                <canvas id="dynamicBarChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 id="chart-pie-title" class="font-bold text-xs uppercase tracking-wider text-slate-600">Distribusi Pengeluaran Kategori</h4>
+                            </div>
+                            <div class="h-64 relative flex items-center justify-center">
+                                <canvas id="dynamicPieChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- BUDGET PROGRESS SECTION -->
+                <section class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
                     <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                         <h3 class="font-bold text-slate-800 flex items-center gap-2">
-                            <i class="fa-solid fa-sliders text-indigo-600"></i> Batas Anggaran Kategori
+                            <i class="fa-solid fa-sliders text-indigo-600"></i> Batas Anggaran Kategori Bulanan
                         </h3>
                         <span class="text-xs text-slate-500">Bulan Ini</span>
                     </div>
-                    <div id="budget-progress-container" class="space-y-4 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
-                        <!-- Dynamic content -->
-                        <p class="text-xs text-slate-400 text-center py-4">Belum ada batas anggaran yang diatur.</p>
+                    <div id="budget-progress-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                        <p class="text-xs text-slate-400 text-center py-4 col-span-2">Belum ada batas anggaran yang diatur.</p>
                     </div>
-                </div>
+                </section>
 
-                <!-- Saving Goals -->
-                <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
-                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                        <h3 class="font-bold text-slate-800 flex items-center gap-2">
-                            <i class="fa-solid fa-piggy-bank text-indigo-600"></i> Target Tabungan
-                        </h3>
-                        <button onclick="openGoalModal()" class="text-xs text-indigo-600 hover:underline font-semibold">+ Target Baru</button>
+                <!-- RECENT TRANSACTIONS TABLE -->
+                <section class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                    <div class="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-lg">Riwayat Transaksi Keuangan</h3>
+                            <p class="text-xs text-slate-500">Daftar alur masuk dan keluar uang Suami & Istri</p>
+                        </div>
+                        
+                        <!-- Filters -->
+                        <div class="flex flex-wrap items-center gap-2">
+                            <select id="filter-owner" onchange="renderTransactions()" class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-700 bg-slate-50 focus:outline-none">
+                                <option value="ALL">Semua Pemilik</option>
+                                <option value="Suami">Suami</option>
+                                <option value="Istri">Istri</option>
+                            </select>
+                            <select id="filter-wallet" onchange="renderTransactions()" class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-700 bg-slate-50 focus:outline-none">
+                                <option value="ALL">Semua Dompet</option>
+                                <option value="Tunai">Tunai</option>
+                                <option value="Bank">Bank</option>
+                                <option value="e-Wallet">e-Wallet</option>
+                            </select>
+                            <select id="filter-type" onchange="renderTransactions()" class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-700 bg-slate-50 focus:outline-none">
+                                <option value="ALL">Semua Tipe</option>
+                                <option value="income">Pemasukan</option>
+                                <option value="expense">Pengeluaran</option>
+                            </select>
+                            <input type="text" id="search-keyword" oninput="renderTransactions()" placeholder="Cari rincian..." class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-700 bg-slate-50 focus:outline-none w-32 sm:w-44">
+                        </div>
                     </div>
-                    <div id="saving-goals-container" class="space-y-4 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
-                        <!-- Dynamic content -->
-                        <p class="text-xs text-slate-400 text-center py-4">Belum ada target tabungan.</p>
-                    </div>
-                </div>
-            </section>
 
-            <!-- RECENT TRANSACTIONS TABLE -->
-            <section class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-                <div class="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-slate-600">
+                            <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">
+                                <tr>
+                                    <th class="px-6 py-3">Tanggal</th>
+                                    <th class="px-6 py-3">Pemilik</th>
+                                    <th class="px-6 py-3">Kategori</th>
+                                    <th class="px-6 py-3">Rincian Spesifik</th>
+                                    <th class="px-6 py-3">Dompet</th>
+                                    <th class="px-6 py-3 text-right">Jumlah (Rp)</th>
+                                    <th class="px-6 py-3 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transaction-table-body" class="divide-y divide-slate-100">
+                                <!-- Dynamic Content -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <!-- VIEW 2: TABUNGAN & INVESTASI -->
+            <div id="view-invest" class="hidden space-y-8">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
                     <div>
-                        <h3 class="font-bold text-slate-800 text-lg">Riwayat Transaksi</h3>
-                        <p class="text-xs text-slate-500">Daftar semua alur masuk dan keluar uang Anda</p>
+                        <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-piggy-bank text-emerald-600"></i> Portfolio Tabungan & Investasi
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-1">Kelola dana darurat, emas, reksadana, deposito, atau target tabungan keluarga.</p>
                     </div>
-                    
-                    <!-- Filters -->
-                    <div class="flex flex-wrap items-center gap-2">
-                        <select id="filter-wallet" onchange="renderTransactions()" class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-700 bg-slate-50 focus:outline-none">
-                            <option value="ALL">Semua Dompet</option>
-                            <option value="Tunai">Tunai</option>
-                            <option value="Bank">Bank</option>
-                            <option value="e-Wallet">e-Wallet</option>
-                        </select>
-                        <select id="filter-type" onchange="renderTransactions()" class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-700 bg-slate-50 focus:outline-none">
-                            <option value="ALL">Semua Tipe</option>
-                            <option value="income">Pemasukan</option>
-                            <option value="expense">Pengeluaran</option>
-                        </select>
-                        <input type="text" id="search-keyword" oninput="renderTransactions()" placeholder="Cari ket..." class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-700 bg-slate-50 focus:outline-none w-36 sm:w-48">
-                    </div>
+                    <button onclick="openInvestModal()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm rounded-xl flex items-center gap-2 shadow-sm transition">
+                        <i class="fa-solid fa-plus-circle"></i> Tambah Akun / Target Investasi
+                    </button>
                 </div>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm text-slate-600">
-                        <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">
-                            <tr>
-                                <th class="px-6 py-3">Tanggal</th>
-                                <th class="px-6 py-3">Kategori</th>
-                                <th class="px-6 py-3">Rincian / Catatan</th>
-                                <th class="px-6 py-3">Dompet</th>
-                                <th class="px-6 py-3 text-right">Jumlah (Rp)</th>
-                                <th class="px-6 py-3 text-center">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="transaction-table-body" class="divide-y divide-slate-100">
-                            <!-- Dynamic Content -->
-                        </tbody>
-                    </table>
+                <!-- INVESTMENT SUMMARY CARDS -->
+                <div id="invest-cards-container" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Dynamic Investment Accounts -->
                 </div>
-            </section>
+
+                <!-- INVESTMENT TRANSACTIONS LOG -->
+                <section class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden space-y-4 p-6">
+                    <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left text-indigo-600"></i> Log Mutasi Tabungan & Investasi
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-slate-600">
+                            <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">
+                                <tr>
+                                    <th class="px-4 py-3">Tanggal</th>
+                                    <th class="px-4 py-3">Nama Tabungan / Investasi</th>
+                                    <th class="px-4 py-3">Pemilik</th>
+                                    <th class="px-4 py-3">Aksi Mutasi</th>
+                                    <th class="px-4 py-3 text-right">Jumlah (Rp)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="invest-log-table-body" class="divide-y divide-slate-100">
+                                <!-- Dynamic Logs -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
         </main>
     </div>
 
@@ -311,6 +380,16 @@
                         <input type="date" id="tx-date" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                     </div>
                     <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Sumber Pemilik</label>
+                        <select id="tx-owner" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none font-semibold">
+                            <option value="Suami">👨 Suami</option>
+                            <option value="Istri">👩 Istri</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Dompet / Rekening</label>
                         <select id="tx-wallet" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                             <option value="Tunai">Tunai (Cash)</option>
@@ -318,13 +397,12 @@
                             <option value="e-Wallet">e-Wallet</option>
                         </select>
                     </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Kategori</label>
-                    <select id="tx-category" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                        <!-- Dynamic Populate -->
-                    </select>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Kategori</label>
+                        <select id="tx-category" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            <!-- Dynamic Populate -->
+                        </select>
+                    </div>
                 </div>
 
                 <div>
@@ -335,7 +413,7 @@
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1">Keterangan / Rincian Spesifik</label>
                     <input type="text" id="tx-note" required placeholder="Misal: Beli Bakso / Ganti Oli / Token Listrik" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                    <p class="text-[11px] text-slate-400 mt-1">Tambahkan detail barang/layanan yang dibeli.</p>
+                    <p class="text-[11px] text-slate-400 mt-1">Tuliskan rincian barang/jasa yang dibeli.</p>
                 </div>
 
                 <div class="flex justify-end gap-3 pt-3 border-t border-slate-100">
@@ -374,31 +452,69 @@
         </div>
     </div>
 
-    <!-- MODAL SAVING GOAL -->
-    <div id="modal-goal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <!-- MODAL ADD INVESTMENT ACCOUNT / GOAL -->
+    <div id="modal-invest" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-100">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold text-slate-800">Tambah Target Tabungan</h3>
-                <button onclick="closeModal('modal-goal')" class="text-slate-400 hover:text-slate-600 text-lg">
+                <h3 class="text-lg font-bold text-slate-800">Tambah Akun Tabungan / Investasi</h3>
+                <button onclick="closeModal('modal-invest')" class="text-slate-400 hover:text-slate-600 text-lg">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
-            <form id="form-goal" onsubmit="saveGoal(event)" class="space-y-4">
+            <form id="form-invest" onsubmit="saveInvestAccount(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Target Tabungan</label>
-                    <input type="text" id="goal-title" required placeholder="Misal: Beli Motor / Liburan Bali" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Tabungan / Instrumen</label>
+                    <input type="text" id="invest-title" required placeholder="Misal: Reksadana Bibi / Emas Antam / Tabungan Umroh" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Target Dana (Rp)</label>
-                    <input type="number" id="goal-target" min="1000" required placeholder="10000000" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Pemilik Dana</label>
+                    <select id="invest-owner" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none font-semibold">
+                        <option value="Suami">👨 Suami</option>
+                        <option value="Istri">👩 Istri</option>
+                        <option value="Gabungan">👨‍👩‍👧 Gabungan</option>
+                    </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Dana Terkumpul Saat Ini (Rp)</label>
-                    <input type="number" id="goal-current" min="0" required placeholder="0" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Saldo Awal (Rp)</label>
+                    <input type="number" id="invest-balance" min="0" required placeholder="0" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Target Dana (Opsional, Isikan jika ada target)</label>
+                    <input type="number" id="invest-target" min="0" placeholder="Contoh: 50000000" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                 </div>
                 <div class="flex justify-end gap-3 pt-3 border-t border-slate-100">
-                    <button type="button" onclick="closeModal('modal-goal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-sm font-medium">Batal</button>
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium shadow-md">Simpan Target</button>
+                    <button type="button" onclick="closeModal('modal-invest')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-sm font-medium">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-medium shadow-md">Simpan Portfolio</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL INVESTMENT DEPOSIT/WITHDRAW MUTATION -->
+    <div id="modal-invest-mutate" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-100">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="mutate-modal-title" class="text-lg font-bold text-slate-800">Setor / Tarik Dana</h3>
+                <button onclick="closeModal('modal-invest-mutate')" class="text-slate-400 hover:text-slate-600 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="form-invest-mutate" onsubmit="saveInvestMutation(event)" class="space-y-4">
+                <input type="hidden" id="mutate-invest-id">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Jenis Transaksi</label>
+                    <select id="mutate-type" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none font-semibold">
+                        <option value="deposit">➕ Setor / Tambah Saldo</option>
+                        <option value="withdraw">➖ Tarik / Pencairan Dana</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Jumlah Nominal (Rp)</label>
+                    <input type="number" id="mutate-amount" min="1" required placeholder="0" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+                <div class="flex justify-end gap-3 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('modal-invest-mutate')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-sm font-medium">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium shadow-md">Proses Mutasi</button>
                 </div>
             </form>
         </div>
@@ -444,9 +560,11 @@
         let currentUser = null;
         let transactions = [];
         let budgets = [];
-        let goals = [];
-        let trendChart = null;
-        let pieChart = null;
+        let investments = [];
+        let investLogs = [];
+
+        let dynamicBarChart = null;
+        let dynamicPieChart = null;
 
         // Initialize App
         window.onload = function() {
@@ -536,6 +654,26 @@
             updateUI();
         }
 
+        // --- NAVIGATION TAB SWITCHING ---
+        function switchTab(tab) {
+            const dashBtn = document.getElementById('tab-btn-dashboard');
+            const investBtn = document.getElementById('tab-btn-invest');
+            const dashView = document.getElementById('view-dashboard');
+            const investView = document.getElementById('view-invest');
+
+            if (tab === 'dashboard') {
+                dashBtn.className = "py-3.5 border-b-2 border-indigo-600 text-indigo-600 font-semibold flex items-center gap-2";
+                investBtn.className = "py-3.5 border-b-2 border-transparent text-slate-600 hover:text-indigo-600 flex items-center gap-2";
+                dashView.classList.remove('hidden');
+                investView.classList.add('hidden');
+            } else {
+                investBtn.className = "py-3.5 border-b-2 border-indigo-600 text-indigo-600 font-semibold flex items-center gap-2";
+                dashBtn.className = "py-3.5 border-b-2 border-transparent text-slate-600 hover:text-indigo-600 flex items-center gap-2";
+                investView.classList.remove('hidden');
+                dashView.classList.add('hidden');
+            }
+        }
+
         // --- DATA STORAGE & MANAGEMENT ---
         function getUserKey(prefix) {
             return `fh_${prefix}_${currentUser.username}`;
@@ -544,41 +682,51 @@
         function loadUserData() {
             transactions = JSON.parse(localStorage.getItem(getUserKey('tx')) || '[]');
             budgets = JSON.parse(localStorage.getItem(getUserKey('bg')) || '[]');
-            goals = JSON.parse(localStorage.getItem(getUserKey('gl')) || '[]');
+            investments = JSON.parse(localStorage.getItem(getUserKey('iv')) || '[]');
+            investLogs = JSON.parse(localStorage.getItem(getUserKey('ivl')) || '[]');
         }
 
         function saveUserData() {
             localStorage.setItem(getUserKey('tx'), JSON.stringify(transactions));
             localStorage.setItem(getUserKey('bg'), JSON.stringify(budgets));
-            localStorage.setItem(getUserKey('gl'), JSON.stringify(goals));
+            localStorage.setItem(getUserKey('iv'), JSON.stringify(investments));
+            localStorage.setItem(getUserKey('ivl'), JSON.stringify(investLogs));
         }
 
         // --- UI & DASHBOARD UPDATES ---
         function updateUI() {
-            calculateWallets();
+            calculateWalletsAndBalances();
             renderTransactions();
             renderBudgets();
-            renderGoals();
             renderCharts();
+            renderInvestments();
         }
 
-        function calculateWallets() {
+        function calculateWalletsAndBalances() {
             let cash = 0, bank = 0, ewallet = 0;
+            let suamiBalance = 0, istriBalance = 0;
 
             transactions.forEach(t => {
                 const amt = parseFloat(t.amount);
-                if (t.wallet === 'Tunai') {
-                    cash += t.type === 'income' ? amt : -amt;
-                } else if (t.wallet === 'Bank') {
-                    bank += t.type === 'income' ? amt : -amt;
-                } else if (t.wallet === 'e-Wallet') {
-                    ewallet += t.type === 'income' ? amt : -amt;
-                }
+                const isInc = t.type === 'income';
+
+                // Wallets
+                if (t.wallet === 'Tunai') cash += isInc ? amt : -amt;
+                else if (t.wallet === 'Bank') bank += isInc ? amt : -amt;
+                else if (t.wallet === 'e-Wallet') ewallet += isInc ? amt : -amt;
+
+                // Ownership Balances
+                const owner = t.owner || 'Suami';
+                if (owner === 'Suami') suamiBalance += isInc ? amt : -amt;
+                else if (owner === 'Istri') istriBalance += isInc ? amt : -amt;
             });
 
             const total = cash + bank + ewallet;
 
             document.getElementById('total-balance').textContent = formatIDR(total);
+            document.getElementById('balance-suami').textContent = formatIDR(suamiBalance);
+            document.getElementById('balance-istri').textContent = formatIDR(istriBalance);
+
             document.getElementById('wallet-cash').textContent = formatIDR(cash);
             document.getElementById('wallet-bank').textContent = formatIDR(bank);
             document.getElementById('wallet-ewallet').textContent = formatIDR(ewallet);
@@ -588,31 +736,39 @@
             const tbody = document.getElementById('transaction-table-body');
             tbody.innerHTML = '';
 
+            const filterOwner = document.getElementById('filter-owner').value;
             const filterWallet = document.getElementById('filter-wallet').value;
             const filterType = document.getElementById('filter-type').value;
             const keyword = document.getElementById('search-keyword').value.toLowerCase();
 
             let filtered = transactions.filter(t => {
+                const ownerMatch = t.owner || 'Suami';
+                const matchOwner = filterOwner === 'ALL' || ownerMatch === filterOwner;
                 const matchWallet = filterWallet === 'ALL' || t.wallet === filterWallet;
                 const matchType = filterType === 'ALL' || t.type === filterType;
                 const matchKey = t.note.toLowerCase().includes(keyword) || t.category.toLowerCase().includes(keyword);
-                return matchWallet && matchType && matchKey;
+                return matchOwner && matchWallet && matchType && matchKey;
             });
 
-            // Sort by date descending
             filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-6 text-center text-slate-400 text-xs">Belum ada catatan transaksi yang sesuai.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" class="px-6 py-6 text-center text-slate-400 text-xs">Belum ada catatan transaksi yang sesuai.</td></tr>`;
                 return;
             }
 
             filtered.forEach(t => {
                 const isInc = t.type === 'income';
+                const owner = t.owner || 'Suami';
                 const row = document.createElement('tr');
                 row.className = "hover:bg-slate-50 transition";
                 row.innerHTML = `
                     <td class="px-6 py-4 whitespace-nowrap text-xs font-medium text-slate-500">${t.date}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2.5 py-1 text-[11px] font-semibold rounded-md ${owner === 'Suami' ? 'bg-blue-50 text-blue-700' : 'bg-pink-50 text-pink-700'}">
+                            ${owner === 'Suami' ? '👨 Suami' : '👩 Istri'}
+                        </span>
+                    </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="px-2.5 py-1 text-[11px] font-semibold rounded-md ${isInc ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}">
                             ${t.category}
@@ -658,6 +814,7 @@
             const newTx = {
                 id: 'tx_' + Date.now(),
                 type: document.getElementById('tx-type').value,
+                owner: document.getElementById('tx-owner').value,
                 date: document.getElementById('tx-date').value,
                 wallet: document.getElementById('tx-wallet').value,
                 category: document.getElementById('tx-category').value,
@@ -719,11 +876,10 @@
             container.innerHTML = '';
 
             if (budgets.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Belum ada batas anggaran yang diatur.</p>`;
+                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4 col-span-2">Belum ada batas anggaran yang diatur.</p>`;
                 return;
             }
 
-            // Calculate current month total spending per category
             const now = new Date();
             const currentMonth = now.getMonth();
             const currentYear = now.getFullYear();
@@ -742,13 +898,13 @@
                 if (percent >= 100) colorClass = 'bg-rose-600';
 
                 const div = document.createElement('div');
-                div.className = "space-y-1.5";
+                div.className = "p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1.5";
                 div.innerHTML = `
                     <div class="flex justify-between items-center text-xs">
-                        <span class="font-medium text-slate-700">${b.category}</span>
-                        <span class="text-slate-500">${formatIDR(spent)} / ${formatIDR(b.limit)} (${percent}%)</span>
+                        <span class="font-semibold text-slate-700">${b.category}</span>
+                        <span class="text-slate-500 font-medium">${formatIDR(spent)} / ${formatIDR(b.limit)} (${percent}%)</span>
                     </div>
-                    <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
                         <div class="${colorClass} h-2 rounded-full transition-all duration-300" style="width: ${percent}%"></div>
                     </div>
                 `;
@@ -756,88 +912,210 @@
             });
         }
 
-        // --- SAVING GOALS ACTIONS ---
-        function openGoalModal() {
-            document.getElementById('modal-goal').classList.remove('hidden');
+        // --- INVESTMENT & SAVINGS ACTIONS ---
+        function openInvestModal() {
+            document.getElementById('modal-invest').classList.remove('hidden');
         }
 
-        function saveGoal(e) {
+        function saveInvestAccount(e) {
             e.preventDefault();
-            const newGoal = {
-                id: 'gl_' + Date.now(),
-                title: document.getElementById('goal-title').value.trim(),
-                target: parseFloat(document.getElementById('goal-target').value),
-                current: parseFloat(document.getElementById('goal-current').value)
+            const newInvest = {
+                id: 'iv_' + Date.now(),
+                title: document.getElementById('invest-title').value.trim(),
+                owner: document.getElementById('invest-owner').value,
+                balance: parseFloat(document.getElementById('invest-balance').value || 0),
+                target: parseFloat(document.getElementById('invest-target').value || 0)
             };
 
-            goals.push(newGoal);
+            investments.push(newInvest);
             saveUserData();
             updateUI();
-            closeModal('modal-goal');
-            document.getElementById('form-goal').reset();
-            showToast('Target tabungan disimpan!', 'success');
+            closeModal('modal-invest');
+            document.getElementById('form-invest').reset();
+            showToast('Akun investasi berhasil ditambahkan!', 'success');
         }
 
-        function renderGoals() {
-            const container = document.getElementById('saving-goals-container');
-            container.innerHTML = '';
+        function openMutateModal(id) {
+            document.getElementById('mutate-invest-id').value = id;
+            document.getElementById('modal-invest-mutate').classList.remove('hidden');
+        }
 
-            if (goals.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Belum ada target tabungan.</p>`;
-                return;
+        function saveInvestMutation(e) {
+            e.preventDefault();
+            const id = document.getElementById('mutate-invest-id').value;
+            const type = document.getElementById('mutate-type').value;
+            const amt = parseFloat(document.getElementById('mutate-amount').value);
+
+            const invest = investments.find(i => i.id === id);
+            if (!invest) return;
+
+            if (type === 'deposit') {
+                invest.balance += amt;
+            } else {
+                if (amt > invest.balance) {
+                    showToast('Saldo investasi tidak mencukupi!', 'error');
+                    return;
+                }
+                invest.balance -= amt;
             }
 
-            goals.forEach(g => {
-                const percent = Math.min(Math.round((g.current / g.target) * 100), 100);
-                const div = document.createElement('div');
-                div.className = "p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-2";
-                div.innerHTML = `
-                    <div class="flex justify-between items-center">
-                        <span class="text-xs font-semibold text-slate-800">${g.title}</span>
-                        <span class="text-xs font-bold text-emerald-600">${percent}%</span>
-                    </div>
-                    <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                        <div class="bg-emerald-500 h-2 rounded-full transition-all duration-300" style="width: ${percent}%"></div>
-                    </div>
-                    <div class="flex justify-between items-center text-[11px] text-slate-500">
-                        <span>Terkumpul: ${formatIDR(g.current)}</span>
-                        <span>Target: ${formatIDR(g.target)}</span>
-                    </div>
-                `;
-                container.appendChild(div);
+            // Save log
+            investLogs.push({
+                date: new Date().toISOString().slice(0,10),
+                investTitle: invest.title,
+                owner: invest.owner,
+                type: type,
+                amount: amt
             });
+
+            saveUserData();
+            updateUI();
+            closeModal('modal-invest-mutate');
+            document.getElementById('form-invest-mutate').reset();
+            showToast('Mutasi dana berhasil dicatat!', 'success');
         }
 
-        // --- CHARTS GENERATION ---
+        function deleteInvestAccount(id) {
+            if (confirm('Hapus portofolio investasi ini?')) {
+                investments = investments.filter(i => i.id !== id);
+                saveUserData();
+                updateUI();
+                showToast('Portofolio dihapus.', 'info');
+            }
+        }
+
+        function renderInvestments() {
+            const cardsContainer = document.getElementById('invest-cards-container');
+            const logTableBody = document.getElementById('invest-log-table-body');
+            cardsContainer.innerHTML = '';
+            logTableBody.innerHTML = '';
+
+            if (investments.length === 0) {
+                cardsContainer.innerHTML = `<p class="text-xs text-slate-400 text-center py-6 col-span-3">Belum ada instrumen tabungan / investasi. Klik "+ Tambah Akun" untuk membuat.</p>`;
+            } else {
+                investments.forEach(inv => {
+                    const hasTarget = inv.target > 0;
+                    const percent = hasTarget ? Math.min(Math.round((inv.balance / inv.target) * 100), 100) : 0;
+                    const card = document.createElement('div');
+                    card.className = "bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4 flex flex-col justify-between";
+                    card.innerHTML = `
+                        <div>
+                            <div class="flex items-center justify-between">
+                                <span class="px-2.5 py-0.5 text-[11px] font-semibold rounded-md ${inv.owner === 'Suami' ? 'bg-blue-50 text-blue-700' : inv.owner === 'Istri' ? 'bg-pink-50 text-pink-700' : 'bg-purple-50 text-purple-700'}">
+                                    ${inv.owner}
+                                </span>
+                                <button onclick="deleteInvestAccount('${inv.id}')" class="text-slate-300 hover:text-rose-600 text-xs">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                            <h4 class="font-bold text-slate-800 text-base mt-2">${inv.title}</h4>
+                            <div class="text-2xl font-bold text-emerald-600 mt-1">${formatIDR(inv.balance)}</div>
+                        </div>
+
+                        ${hasTarget ? `
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-[11px] text-slate-500 font-medium">
+                                <span>Target: ${formatIDR(inv.target)}</span>
+                                <span class="font-bold text-emerald-600">${percent}%</span>
+                            </div>
+                            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                                <div class="bg-emerald-500 h-2 rounded-full transition-all duration-300" style="width: ${percent}%"></div>
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        <div class="pt-2 border-t border-slate-100 flex gap-2">
+                            <button onclick="openMutateModal('${inv.id}')" class="w-full py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold rounded-xl text-xs transition flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-arrows-rotate"></i> Setor / Tarik Dana
+                            </button>
+                        </div>
+                    `;
+                    cardsContainer.appendChild(card);
+                });
+            }
+
+            // Render Logs
+            if (investLogs.length === 0) {
+                logTableBody.innerHTML = `<tr><td colspan="5" class="px-4 py-4 text-center text-xs text-slate-400">Belum ada riwayat mutasi investasi.</td></tr>`;
+            } else {
+                investLogs.slice().reverse().forEach(log => {
+                    const isDep = log.type === 'deposit';
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-4 py-3 text-xs text-slate-500">${log.date}</td>
+                        <td class="px-4 py-3 text-xs font-semibold text-slate-800">${log.investTitle}</td>
+                        <td class="px-4 py-3 text-xs text-slate-600">${log.owner}</td>
+                        <td class="px-4 py-3 text-xs font-semibold ${isDep ? 'text-emerald-600' : 'text-amber-600'}">
+                            ${isDep ? '➕ Setor' : '➖ Tarik'}
+                        </td>
+                        <td class="px-4 py-3 text-xs text-right font-bold text-slate-800">${formatIDR(log.amount)}</td>
+                    `;
+                    logTableBody.appendChild(row);
+                });
+            }
+        }
+
+        // --- DYNAMIC CHARTS GENERATION ---
         function renderCharts() {
-            renderTrendChart();
-            renderCategoryPieChart();
+            renderDynamicBarChart();
+            renderDynamicPieChart();
         }
 
-        function renderTrendChart() {
-            const ctx = document.getElementById('monthlyTrendChart').getContext('2d');
-            if (trendChart) trendChart.destroy();
+        function renderDynamicBarChart() {
+            const ctx = document.getElementById('dynamicBarChart').getContext('2d');
+            if (dynamicBarChart) dynamicBarChart.destroy();
 
-            // Group transactions by month
-            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
-            const incomeData = new Array(12).fill(0);
-            const expenseData = new Array(12).fill(0);
+            const ownerFilter = document.getElementById('chart-filter-owner').value;
+            const timelineFilter = document.getElementById('chart-filter-timeline').value;
 
-            const currentYear = new Date().getFullYear();
+            let labels = [];
+            let incomeData = [];
+            let expenseData = [];
 
-            transactions.forEach(t => {
-                const d = new Date(t.date);
-                if (d.getFullYear() === currentYear) {
-                    const m = d.getMonth();
-                    if (t.type === 'income') incomeData[m] += t.amount;
-                    else expenseData[m] += t.amount;
-                }
-            });
+            if (timelineFilter === 'monthly') {
+                labels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
+                incomeData = new Array(12).fill(0);
+                expenseData = new Array(12).fill(0);
+                const currentYear = new Date().getFullYear();
 
-            trendChart = new Chart(ctx, {
+                transactions.forEach(t => {
+                    const tOwner = t.owner || 'Suami';
+                    if (ownerFilter === 'ALL' || tOwner === ownerFilter) {
+                        const d = new Date(t.date);
+                        if (d.getFullYear() === currentYear) {
+                            const m = d.getMonth();
+                            if (t.type === 'income') incomeData[m] += t.amount;
+                            else expenseData[m] += t.amount;
+                        }
+                    }
+                });
+            } else {
+                // Weekly Filter (Last 4 Weeks)
+                labels = ['Minggu 1', 'Minggu 2', 'Minggu 3', 'Minggu 4'];
+                incomeData = new Array(4).fill(0);
+                expenseData = new Array(4).fill(0);
+
+                const now = new Date();
+                transactions.forEach(t => {
+                    const tOwner = t.owner || 'Suami';
+                    if (ownerFilter === 'ALL' || tOwner === ownerFilter) {
+                        const d = new Date(t.date);
+                        const diffDays = Math.floor((now - d) / (1000 * 60 * 60 * 24));
+                        if (diffDays >= 0 && diffDays < 28) {
+                            const weekIdx = 3 - Math.floor(diffDays / 7);
+                            if (weekIdx >= 0 && weekIdx < 4) {
+                                if (t.type === 'income') incomeData[weekIdx] += t.amount;
+                                else expenseData[weekIdx] += t.amount;
+                            }
+                        }
+                    }
+                });
+            }
+
+            dynamicBarChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: months,
+                    labels: labels,
                     datasets: [
                         { label: 'Pemasukan', data: incomeData, backgroundColor: '#10b981', borderRadius: 4 },
                         { label: 'Pengeluaran', data: expenseData, backgroundColor: '#f43f5e', borderRadius: 4 }
@@ -857,20 +1135,24 @@
             });
         }
 
-        function renderCategoryPieChart() {
-            const ctx = document.getElementById('categoryDistributionChart').getContext('2d');
-            if (pieChart) pieChart.destroy();
+        function renderDynamicPieChart() {
+            const ctx = document.getElementById('dynamicPieChart').getContext('2d');
+            if (dynamicPieChart) dynamicPieChart.destroy();
 
+            const ownerFilter = document.getElementById('chart-filter-owner').value;
             const expenseMap = {};
-            transactions.filter(t => t.type === 'expense').forEach(t => {
-                expenseMap[t.category] = (expenseMap[t.category] || 0) + t.amount;
-            });
+
+            transactions
+                .filter(t => t.type === 'expense' && (ownerFilter === 'ALL' || (t.owner || 'Suami') === ownerFilter))
+                .forEach(t => {
+                    expenseMap[t.category] = (expenseMap[t.category] || 0) + t.amount;
+                });
 
             const labels = Object.keys(expenseMap);
             const data = Object.values(expenseMap);
 
             if (labels.length === 0) {
-                pieChart = new Chart(ctx, {
+                dynamicPieChart = new Chart(ctx, {
                     type: 'doughnut',
                     data: {
                         labels: ['Belum Ada Data'],
@@ -886,7 +1168,7 @@
                 '#ec4899', '#14b8a6', '#f97316', '#06b6d4', '#84cc16'
             ];
 
-            pieChart = new Chart(ctx, {
+            dynamicPieChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: labels,
@@ -912,11 +1194,12 @@
                 return;
             }
 
-            let csvContent = "data:text/csv;charset=utf-8,ID,Tanggal,Tipe,Kategori,Dompet,Jumlah,Keterangan\n";
+            let csvContent = "data:text/csv;charset=utf-8,ID,Tanggal,Pemilik,Tipe,Kategori,Dompet,Jumlah,Keterangan\n";
             transactions.forEach(t => {
                 const noteClean = `"${t.note.replace(/"/g, '""')}"`;
                 const catClean = `"${t.category.replace(/"/g, '""')}"`;
-                csvContent += `${t.id},${t.date},${t.type},${catClean},${t.wallet},${t.amount},${noteClean}\n`;
+                const owner = t.owner || 'Suami';
+                csvContent += `${t.id},${t.date},${owner},${t.type},${catClean},${t.wallet},${t.amount},${noteClean}\n`;
             });
 
             const encodedUri = encodeURI(csvContent);
