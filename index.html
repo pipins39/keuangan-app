@@ -631,7 +631,6 @@
 
             if(!walletId) return alert("Silakan buat dompet terlebih dahulu di menu Kelola Dompet!");
 
-            // Jika posisi sedang Edit: Hapus versi transaksi lama terlebih dahulu dari hitungan saldo lokal
             if(editId) {
                 const oldTxIndex = transactions.findIndex(t => t.id === parseInt(editId));
                 if(oldTxIndex > -1) {
@@ -703,6 +702,23 @@
             }
         }
 
+        // FITUR HAPUS TRANSAKSI
+        function deleteTransaction(id) {
+            if(!confirm("Yakin ingin menghapus transaksi ini?")) return;
+            const txIndex = transactions.findIndex(t => t.id === id);
+            if(txIndex > -1) {
+                const tx = transactions[txIndex];
+                revertTxBalance(tx); // Kembalikan saldo dompet
+                transactions.splice(txIndex, 1);
+                
+                populateWalletOptions();
+                updateDashboard();
+
+                postToSheets({ action: "syncWallets", wallets: wallets });
+                alert("Transaksi berhasil dihapus!");
+            }
+        }
+
         function revertTxBalance(tx) {
             const walletSource = wallets.find(w => w.id === tx.walletId);
             if(tx.type === 'TRANSFER') {
@@ -771,9 +787,14 @@
                         <td class="p-3 text-slate-500">${walletDisplay}</td>
                         <td class="p-3 text-right font-bold ${amountColor}">${amountText}</td>
                         <td class="p-3 text-center">
-                            <button onclick="editTransaction(${t.id})" class="text-indigo-600 hover:text-indigo-800 p-1" title="Edit Transaksi">
-                                <i class="fa-solid fa-pen-to-square"></i>
-                            </button>
+                            <div class="flex items-center justify-center gap-2">
+                                <button onclick="editTransaction(${t.id})" class="text-indigo-600 hover:text-indigo-800 p-1" title="Edit Transaksi">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+                                <button onclick="deleteTransaction(${t.id})" class="text-rose-500 hover:text-rose-700 p-1" title="Hapus Transaksi">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 `;
@@ -939,7 +960,6 @@
             }).join('');
         }
 
-        // PERBAIKAN TARGET ANGGARAN & WARNA KUNING (>50%) / MERAH (>90%)
         function renderBudgeting() {
             const grid = document.getElementById('budgetGrid');
             const selMonth = parseInt(document.getElementById('budgetMonth').value);
