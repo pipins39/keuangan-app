@@ -14,6 +14,14 @@
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
 
+    <!-- LOADING OVERLAY -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center text-white font-semibold hidden">
+        <div class="bg-slate-800 px-6 py-4 rounded-xl shadow-xl flex items-center gap-3">
+            <i class="fa-solid fa-spinner fa-spin text-indigo-400 text-xl"></i>
+            <span>Menyingkronkan Data Google Sheets...</span>
+        </div>
+    </div>
+
     <!-- AUTH SECTION -->
     <div id="authSection" class="min-h-screen flex items-center justify-center p-4">
         <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-slate-100">
@@ -76,14 +84,19 @@
     <div id="mainApp" class="hidden min-h-screen flex flex-col md:flex-row">
         <aside class="w-full md:w-64 bg-slate-900 text-slate-300 flex flex-col justify-between shrink-0">
             <div>
-                <div class="p-5 border-b border-slate-800 flex items-center gap-3">
-                    <div class="bg-indigo-600 text-white p-2 rounded-lg">
-                        <i class="fa-solid fa-wallet"></i>
+                <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-indigo-600 text-white p-2 rounded-lg">
+                            <i class="fa-solid fa-wallet"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-bold text-white text-sm">FinKeluarga</h2>
+                            <p class="text-xs text-slate-400">Pembukuan Pasangan</p>
+                        </div>
                     </div>
-                    <div>
-                        <h2 class="font-bold text-white text-sm">FinKeluarga</h2>
-                        <p class="text-xs text-slate-400">Pembukuan Pasangan</p>
-                    </div>
+                    <button onclick="loadOnlineData()" class="text-xs text-indigo-400 hover:text-indigo-300" title="Refresh Data Online">
+                        <i class="fa-solid fa-rotate"></i>
+                    </button>
                 </div>
                 <nav class="p-3 space-y-1 text-sm">
                     <button onclick="switchTab('dashboard')" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-800 text-left">
@@ -118,7 +131,7 @@
         </aside>
 
         <main class="flex-1 p-4 md:p-8 overflow-y-auto custom-scroll max-w-7xl">
-            <!-- TAB 1: DASHBOARD UTAMA -->
+            <!-- TAB 1: DASHBOARD -->
             <div id="tab-dashboard" class="tab-content space-y-6">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
@@ -131,7 +144,7 @@
                             <option value="Suami">Hanya Suami</option>
                             <option value="Istri">Hanya Istri</option>
                         </select>
-                        <select id="filterPeriodType" onchange="togglePeriodControls('dash'); updateDashboard();" class="text-xs border rounded-lg px-2.5 py-1.5 bg-white shadow-sm outline-none">
+                        <select id="filterPeriodType" onchange="togglePeriodControls(); updateDashboard();" class="text-xs border rounded-lg px-2.5 py-1.5 bg-white shadow-sm outline-none">
                             <option value="THIS_MONTH" selected>Bulan Ini</option>
                             <option value="SPECIFIC_MONTH">Bulan Spesifik</option>
                             <option value="ALL">Semua Waktu</option>
@@ -255,7 +268,6 @@
                                     <th class="p-3">Kategori & Keterangan</th>
                                     <th class="p-3">Dompet</th>
                                     <th class="p-3 text-right">Nominal</th>
-                                    <th class="p-3 text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody id="txTableBody" class="divide-y divide-slate-100"></tbody>
@@ -268,7 +280,7 @@
             <div id="tab-savings" class="tab-content space-y-6 hidden">
                 <div>
                     <h1 class="text-xl font-bold text-slate-800">Tabungan & Portofolio Investasi</h1>
-                    <p class="text-xs text-slate-500">Saldo tabungan menyesuaikan secara otomatis saat alokasi pemasukan atau penarikan dana</p>
+                    <p class="text-xs text-slate-500">Saldo tabungan tersinkronisasi online di semua perangkat</p>
                 </div>
                 <form onsubmit="handleAddSavings(event)" class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm space-y-4">
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -305,7 +317,7 @@
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h1 class="text-xl font-bold text-slate-800">Target Anggaran Bulanan</h1>
-                        <p class="text-xs text-slate-500">Setiap bulan memiliki target anggaran tersendiri. Yellow (>50%), Red (>90%)</p>
+                        <p class="text-xs text-slate-500">Setiap bulan memiliki target anggaran tersendiri</p>
                     </div>
                     <div class="flex items-center gap-2">
                         <select id="budgetMonth" onchange="renderBudgeting()" class="text-xs border rounded-lg px-2.5 py-1.5 bg-white shadow-sm outline-none"></select>
@@ -336,7 +348,6 @@
                     <h1 class="text-xl font-bold text-slate-800">Kelola Daftar Kategori</h1>
                     <p class="text-xs text-slate-500">Tambah, ubah, atau hapus kategori pengeluaran dan pemasukan</p>
                 </div>
-
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm space-y-4">
                         <h3 class="text-sm font-bold text-rose-600 flex items-center gap-2">
@@ -388,7 +399,6 @@
         </main>
     </div>
 
-    <!-- JAVASCRIPT LOGIC -->
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyrw13jWnNxP8Qn6WEmAha_eE2-oY4rkYtj_jmzI_YdY-WP1jkaNTfynDwaDVZ6abviDw/exec";
 
@@ -402,79 +412,110 @@
             "Upah ART (Gaji/Kasbon)", "Pakaian & Seragam (Jahit Baju)", "Perabot Rumah", "Pajak Kendaraan",
             "Keperluan Pesta/Upacara", "Sumbangan (Nikahan, Kado)", "Pengeluaran Ortud & Saudara", "Infaq/Sedekah", "Lainnya"
         ];
-
         const DEFAULT_INCOME_CATEGORIES = ["Gaji Pokok", "Tukin", "Uang Makan", "Perjadin", "Uang Lembur", "Lainnya"];
         const MONTH_NAMES = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-        const COLOR_PALETTE = [
-            '#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#14b8a6', 
-            '#f97316', '#06b6d4', '#84cc16', '#e11d48', '#64748b', '#d97706', '#059669'
-        ];
+        const COLOR_PALETTE = ['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#14b8a6', '#f97316', '#06b6d4', '#84cc16'];
 
         let currentUser = null;
-        let users = JSON.parse(localStorage.getItem('fin_users')) || [];
-        let transactions = JSON.parse(localStorage.getItem('fin_transactions')) || [];
-        let wallets = JSON.parse(localStorage.getItem('fin_wallets')) || [
+        let users = [];
+        let transactions = [];
+        let wallets = [
             { id: 1, name: "Tunai Keluarga", balance: 1000000 },
             { id: 2, name: "Bank Suami", balance: 5000000 },
             { id: 3, name: "Bank Istri", balance: 5000000 },
             { id: 4, name: "OVO / GoPay", balance: 500000 }
         ];
-        let savings = JSON.parse(localStorage.getItem('fin_savings')) || [];
-        let monthlyBudgets = JSON.parse(localStorage.getItem('fin_monthly_budgets')) || {};
-        let customExpenseCategories = JSON.parse(localStorage.getItem('fin_exp_cats')) || DEFAULT_EXPENSE_CATEGORIES;
-        let customIncomeCategories = JSON.parse(localStorage.getItem('fin_inc_cats')) || DEFAULT_INCOME_CATEGORIES;
+        let savings = [];
+        let monthlyBudgets = {};
+        let customExpenseCategories = [...DEFAULT_EXPENSE_CATEGORIES];
+        let customIncomeCategories = [...DEFAULT_INCOME_CATEGORIES];
 
         let chartInstance = null;
 
         window.onload = function() {
-            const today = new Date().toISOString().slice(0, 10);
-            document.getElementById('txDate').value = today;
-
+            document.getElementById('txDate').value = new Date().toISOString().slice(0, 10);
             initMonthYearDropdowns();
-
-            const savedSession = localStorage.getItem('fin_session');
-            if(savedSession) {
-                currentUser = JSON.parse(savedSession);
-                showApp();
-            } else {
-                showAuth();
-            }
+            loadOnlineData();
         };
+
+        function showLoading(show) {
+            document.getElementById('loadingOverlay').classList.toggle('hidden', !show);
+        }
+
+        function loadOnlineData() {
+            showLoading(true);
+            fetch(GOOGLE_SCRIPT_URL)
+                .then(res => res.json())
+                .then(data => {
+                    showLoading(false);
+                    if(data.users && data.users.length > 0) users = data.users;
+                    if(data.wallets && data.wallets.length > 0) wallets = data.wallets.map(w => ({ id: parseInt(w.ID), name: w.Name, balance: parseFloat(w.Balance) }));
+                    if(data.savings && data.savings.length > 0) savings = data.savings.map(s => ({ id: parseInt(s.ID), name: s.Name, owner: s.Owner, current: parseFloat(s.Current), target: parseFloat(s.Target) }));
+                    
+                    if(data.budgets && data.budgets.length > 0) {
+                        monthlyBudgets = {};
+                        data.budgets.forEach(b => {
+                            if(!monthlyBudgets[b.PeriodKey]) monthlyBudgets[b.PeriodKey] = {};
+                            monthlyBudgets[b.PeriodKey][b.Category] = parseFloat(b.Amount);
+                        });
+                    }
+
+                    if(data.categories && data.categories.length > 0) {
+                        customExpenseCategories = data.categories.filter(c => c.Type === 'EXPENSE').map(c => c.Name);
+                        customIncomeCategories = data.categories.filter(c => c.Type === 'INCOME').map(c => c.Name);
+                    }
+
+                    if(data.transactions) {
+                        transactions = data.transactions.map(t => ({
+                            id: parseInt(t.ID),
+                            date: String(t.Tanggal).slice(0, 10),
+                            type: t.Jenis,
+                            owner: t.Pemilik,
+                            category: t.Kategori,
+                            walletId: wallets.find(w => w.name === t.Dompet)?.id || 1,
+                            targetWalletId: wallets.find(w => w.name === t.DompetTujuan)?.id || null,
+                            amount: parseFloat(t.Nominal),
+                            note: t.Keterangan
+                        }));
+                    }
+
+                    const savedSession = localStorage.getItem('fin_session');
+                    if(savedSession) { currentUser = JSON.parse(savedSession); showApp(); } else { showAuth(); }
+                })
+                .catch(err => {
+                    showLoading(false);
+                    console.error("Gagal sync online:", err);
+                    const savedSession = localStorage.getItem('fin_session');
+                    if(savedSession) { currentUser = JSON.parse(savedSession); showApp(); } else { showAuth(); }
+                });
+        }
+
+        function postToSheets(payload) {
+            return fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+        }
 
         function initMonthYearDropdowns() {
             const now = new Date();
-            const currentM = now.getMonth();
-            const currentY = now.getFullYear();
-
             ['filterMonth', 'budgetMonth'].forEach(id => {
-                const select = document.getElementById(id);
-                select.innerHTML = MONTH_NAMES.map((m, idx) => `<option value="${idx}" ${idx === currentM ? 'selected' : ''}>${m}</option>`).join('');
+                document.getElementById(id).innerHTML = MONTH_NAMES.map((m, idx) => `<option value="${idx}" ${idx === now.getMonth() ? 'selected' : ''}>${m}</option>`).join('');
             });
-
             ['filterYear', 'budgetYear'].forEach(id => {
-                const select = document.getElementById(id);
                 let options = '';
                 for(let y = 2024; y <= 2030; y++) {
-                    options += `<option value="${y}" ${y === currentY ? 'selected' : ''}>${y}</option>`;
+                    options += `<option value="${y}" ${y === now.getFullYear() ? 'selected' : ''}>${y}</option>`;
                 }
-                select.innerHTML = options;
+                document.getElementById(id).innerHTML = options;
             });
         }
 
-        function togglePeriodControls(prefix) {
+        function togglePeriodControls() {
             const type = document.getElementById('filterPeriodType').value;
-            const container = document.getElementById('dashMonthYearContainer');
-            container.classList.toggle('hidden', type !== 'SPECIFIC_MONTH');
-        }
-
-        function saveData() {
-            localStorage.setItem('fin_users', JSON.stringify(users));
-            localStorage.setItem('fin_transactions', JSON.stringify(transactions));
-            localStorage.setItem('fin_wallets', JSON.stringify(wallets));
-            localStorage.setItem('fin_savings', JSON.stringify(savings));
-            localStorage.setItem('fin_monthly_budgets', JSON.stringify(monthlyBudgets));
-            localStorage.setItem('fin_exp_cats', JSON.stringify(customExpenseCategories));
-            localStorage.setItem('fin_inc_cats', JSON.stringify(customIncomeCategories));
+            document.getElementById('dashMonthYearContainer').classList.toggle('hidden', type !== 'SPECIFIC_MONTH');
         }
 
         function showRegisterForm() {
@@ -489,22 +530,18 @@
 
         function handleRegister(e) {
             e.preventDefault();
-            if(users.length >= 2) {
-                alert("Pendaftaran dibatasi maksimal 2 akun (1 Suami dan 1 Istri).");
-                return;
-            }
+            if(users.length >= 2) return alert("Pendaftaran dibatasi maksimal 2 akun (1 Suami dan 1 Istri).");
             const name = document.getElementById('regName').value;
             const role = document.getElementById('regRole').value;
             const username = document.getElementById('regUsername').value;
             const password = document.getElementById('regPassword').value;
 
-            if(users.some(u => u.username === username)) {
-                alert("Username sudah terpakai!");
-                return;
-            }
+            if(users.some(u => u.username === username)) return alert("Username sudah terpakai!");
 
-            users.push({ name, role, username, password });
-            saveData();
+            const newUser = { name, role, username, password };
+            users.push(newUser);
+            postToSheets({ action: "addUser", ...newUser });
+
             alert("Pendaftaran Berhasil! Silakan Login.");
             showLoginForm();
         }
@@ -514,13 +551,13 @@
             const username = document.getElementById('loginUsername').value;
             const password = document.getElementById('loginPassword').value;
 
-            const user = users.find(u => u.username === username && u.password === password);
+            const user = users.find(u => String(u.Username || u.username) === username && String(u.Password || u.password) === password);
             if(user) {
-                currentUser = user;
-                localStorage.setItem('fin_session', JSON.stringify(user));
+                currentUser = { name: user.Name || user.name, role: user.Role || user.role, username: user.Username || user.username };
+                localStorage.setItem('fin_session', JSON.stringify(currentUser));
                 showApp();
             } else {
-                alert("Username atau Password salah!");
+                alert("Username atau Password salah/belum tersinkron!");
             }
         }
 
@@ -539,7 +576,6 @@
         function showApp() {
             document.getElementById('authSection').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
-            
             document.getElementById('userDisplayName').textContent = currentUser.name;
             document.getElementById('userDisplayRole').textContent = currentUser.role;
 
@@ -562,39 +598,28 @@
         }
 
         function handleTxTypeChange() {
-            const type = document.getElementById('txType').value;
-            const isTransfer = type === 'TRANSFER';
-
+            const isTransfer = document.getElementById('txType').value === 'TRANSFER';
             document.getElementById('txCategoryBox').classList.toggle('hidden', isTransfer);
             document.getElementById('txSavingBox').classList.toggle('hidden', isTransfer);
             document.getElementById('txTargetWalletBox').classList.toggle('hidden', !isTransfer);
-
             document.getElementById('txWalletLabel').textContent = isTransfer ? 'Dompet Asal (Transfer dari)' : 'Sumber Dompet/Rekening';
-
-            if (!isTransfer) {
-                populateCategoryOptions();
-            }
+            if (!isTransfer) populateCategoryOptions();
         }
 
         function populateCategoryOptions() {
             const type = document.getElementById('txType').value;
-            const categorySelect = document.getElementById('txCategory');
             const categories = type === 'EXPENSE' ? customExpenseCategories : customIncomeCategories;
-            categorySelect.innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
+            document.getElementById('txCategory').innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
         }
 
         function populateWalletOptions() {
-            const walletSelect = document.getElementById('txWallet');
-            const targetSelect = document.getElementById('txTargetWallet');
-
             const options = wallets.map(w => `<option value="${w.id}">${w.name} (Rp ${w.balance.toLocaleString('id-ID')})</option>`).join('');
-            walletSelect.innerHTML = options;
-            targetSelect.innerHTML = options;
+            document.getElementById('txWallet').innerHTML = options;
+            document.getElementById('txTargetWallet').innerHTML = options;
         }
 
         function populateSavingOptions() {
-            const savingSelect = document.getElementById('txSaving');
-            savingSelect.innerHTML = '<option value="">-- Tanpa Pos Tabungan --</option>' + 
+            document.getElementById('txSaving').innerHTML = '<option value="">-- Tanpa Pos Tabungan --</option>' + 
                 savings.map(s => `<option value="${s.id}">${s.name} (Saldo: Rp ${s.current.toLocaleString('id-ID')})</option>`).join('');
         }
 
@@ -610,137 +635,37 @@
             const walletSource = wallets.find(w => w.id === walletId);
             let targetWalletName = "-";
             let categoryName = "Transfer / Mutasi";
-
             const txId = Date.now();
 
             if (type === 'TRANSFER') {
                 const targetWalletId = parseInt(document.getElementById('txTargetWallet').value);
-                if (walletId === targetWalletId) {
-                    alert("Dompet asal dan dompet tujuan tidak boleh sama!");
-                    return;
-                }
+                if (walletId === targetWalletId) return alert("Dompet asal dan tujuan tidak boleh sama!");
                 const walletTarget = wallets.find(w => w.id === targetWalletId);
                 targetWalletName = walletTarget ? walletTarget.name : "-";
-
-                if (walletSource.balance < amount) {
-                    if (!confirm("Saldo dompet asal kurang. Tetap lanjutkan transfer?")) return;
-                }
-
                 walletSource.balance -= amount;
                 walletTarget.balance += amount;
 
-                transactions.unshift({
-                    id: txId,
-                    type: 'TRANSFER',
-                    owner,
-                    amount,
-                    category: 'Transfer / Mutasi',
-                    walletId,
-                    targetWalletId,
-                    date,
-                    note: note || `Transfer dari ${walletSource.name} ke ${walletTarget.name}`
-                });
-
+                transactions.unshift({ id: txId, type: 'TRANSFER', owner, amount, category: 'Transfer / Mutasi', walletId, targetWalletId, date, note });
             } else {
                 categoryName = document.getElementById('txCategory').value;
-                const savingId = document.getElementById('txSaving').value ? parseInt(document.getElementById('txSaving').value) : null;
+                if (type === 'EXPENSE') walletSource.balance -= amount;
+                else walletSource.balance += amount;
 
-                if (savingId) {
-                    const pos = savings.find(s => s.id === savingId);
-
-                    if (type === 'INCOME') {
-                        if (walletSource.balance < amount) {
-                            if (!confirm("Saldo dompet kurang dari nominal yang disisihkan untuk tabungan. Tetap lanjutkan?")) return;
-                        }
-                        walletSource.balance -= amount;
-                        if (pos) pos.current += amount;
-                    } else {
-                        if (pos && pos.current < amount) {
-                            if (!confirm("Nominal penarikan melebihi saldo pos tabungan ini. Tetap lanjutkan?")) return;
-                        }
-                        if (pos) pos.current = Math.max(0, pos.current - amount);
-                        walletSource.balance += amount;
-                    }
-                } else {
-                    if (type === 'EXPENSE') {
-                        if (walletSource.balance < amount) {
-                            if (!confirm("Saldo dompet ini kurang. Tetap lanjutkan?")) return;
-                        }
-                        walletSource.balance -= amount;
-                    } else {
-                        walletSource.balance += amount;
-                    }
-                }
-
-                transactions.unshift({ id: txId, type, owner, amount, category: categoryName, walletId, savingId, date, note });
+                transactions.unshift({ id: txId, type, owner, amount, category: categoryName, walletId, date, note });
             }
             
-            saveData();
             document.getElementById('txAmount').value = '';
             document.getElementById('txNote').value = '';
             populateWalletOptions();
-            populateSavingOptions();
             updateDashboard();
 
-            // SINKRONISASI KE GOOGLE SHEETS
-            const sheetPayload = {
-                action: "addTransaction",
-                id: txId,
-                date: date,
-                type: type,
-                owner: owner,
-                category: categoryName,
-                wallet: walletSource ? walletSource.name : "-",
-                targetWallet: targetWalletName,
-                amount: amount,
-                note: note || "-"
-            };
+            postToSheets({
+                action: "addTransaction", id: txId, date: date, type: type, owner: owner, category: categoryName,
+                wallet: walletSource ? walletSource.name : "-", targetWallet: targetWalletName, amount: amount, note: note || "-"
+            });
+            postToSheets({ action: "syncWallets", wallets: wallets });
 
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: "POST",
-                mode: "no-cors",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(sheetPayload)
-            }).then(() => {
-                console.log("Tersinkron ke Google Sheets!");
-            }).catch(err => console.error("Gagal sync Sheets:", err));
-
-            alert("Transaksi Berhasil Disimpan!");
-        }
-
-        function deleteTransaction(id) {
-            if(!confirm("Hapus transaksi ini?")) return;
-            const txIndex = transactions.findIndex(t => t.id === id);
-            if(txIndex > -1) {
-                const tx = transactions[txIndex];
-                const walletSource = wallets.find(w => w.id === tx.walletId);
-
-                if (tx.type === 'TRANSFER') {
-                    const walletTarget = wallets.find(w => w.id === tx.targetWalletId);
-                    if (walletSource) walletSource.balance += tx.amount;
-                    if (walletTarget) walletTarget.balance -= tx.amount;
-                } else if (tx.savingId) {
-                    const pos = savings.find(s => s.id === tx.savingId);
-                    if (tx.type === 'INCOME') {
-                        if (walletSource) walletSource.balance += tx.amount;
-                        if (pos) pos.current = Math.max(0, pos.current - tx.amount);
-                    } else {
-                        if (walletSource) walletSource.balance -= tx.amount;
-                        if (pos) pos.current += tx.amount;
-                    }
-                } else {
-                    if (walletSource) {
-                        if (tx.type === 'EXPENSE') walletSource.balance += tx.amount;
-                        else walletSource.balance -= tx.amount;
-                    }
-                }
-
-                transactions.splice(txIndex, 1);
-                saveData();
-                updateDashboard();
-                populateWalletOptions();
-                populateSavingOptions();
-            }
+            alert("Transaksi Berhasil Disimpan & Tersinkron!");
         }
 
         function updateDashboard() {
@@ -748,18 +673,14 @@
             const periodType = document.getElementById('filterPeriodType').value;
             const selMonth = parseInt(document.getElementById('filterMonth').value);
             const selYear = parseInt(document.getElementById('filterYear').value);
-
-            const now = new Date();
-            const currentMonthStr = now.toISOString().slice(0, 7);
+            const currentMonthStr = new Date().toISOString().slice(0, 7);
 
             let filteredTx = transactions.filter(t => {
                 const matchOwner = ownerFilter === 'ALL' || t.owner === ownerFilter;
                 let matchPeriod = true;
-
                 if (t.date) {
-                    if (periodType === 'THIS_MONTH') {
-                        matchPeriod = t.date.startsWith(currentMonthStr);
-                    } else if (periodType === 'SPECIFIC_MONTH') {
+                    if (periodType === 'THIS_MONTH') matchPeriod = t.date.startsWith(currentMonthStr);
+                    else if (periodType === 'SPECIFIC_MONTH') {
                         const d = new Date(t.date);
                         matchPeriod = (d.getMonth() === selMonth && d.getFullYear() === selYear);
                     }
@@ -769,42 +690,22 @@
 
             const totalIncome = filteredTx.filter(t => t.type === 'INCOME').reduce((acc, t) => acc + t.amount, 0);
             const totalExpense = filteredTx.filter(t => t.type === 'EXPENSE').reduce((acc, t) => acc + t.amount, 0);
-
-            // RUMUS PERBAIKAN: TOTAL SISA SALDO DARI SELURUH REKENING/DOMPET
-            const totalCurrentWalletBalance = wallets.reduce((acc, w) => acc + w.balance, 0);
+            const totalWalletBalance = wallets.reduce((acc, w) => acc + w.balance, 0);
 
             document.getElementById('dashIncome').textContent = `Rp ${totalIncome.toLocaleString('id-ID')}`;
             document.getElementById('dashExpense').textContent = `Rp ${totalExpense.toLocaleString('id-ID')}`;
-            document.getElementById('dashBalance').textContent = `Rp ${totalCurrentWalletBalance.toLocaleString('id-ID')}`;
+            document.getElementById('dashBalance').textContent = `Rp ${totalWalletBalance.toLocaleString('id-ID')}`;
 
-            const tbody = document.getElementById('txTableBody');
-            tbody.innerHTML = filteredTx.map(t => {
+            document.getElementById('txTableBody').innerHTML = filteredTx.map(t => {
                 const wallet = wallets.find(w => w.id === t.walletId);
                 const targetWallet = t.targetWalletId ? wallets.find(w => w.id === t.targetWalletId) : null;
-                const formattedDate = t.date || '-';
-
                 let amountText = `Rp ${t.amount.toLocaleString('id-ID')}`;
-                let amountColor = 'text-slate-700';
-
-                if (t.type === 'EXPENSE') {
-                    amountText = `- Rp ${t.amount.toLocaleString('id-ID')}`;
-                    amountColor = 'text-rose-600';
-                } else if (t.type === 'INCOME') {
-                    amountText = `+ Rp ${t.amount.toLocaleString('id-ID')}`;
-                    amountColor = 'text-emerald-600';
-                } else if (t.type === 'TRANSFER') {
-                    amountText = `↔ Rp ${t.amount.toLocaleString('id-ID')}`;
-                    amountColor = 'text-purple-600';
-                }
-
-                let walletDisplay = wallet ? wallet.name : '-';
-                if (t.type === 'TRANSFER' && targetWallet) {
-                    walletDisplay = `${wallet.name} ➔ ${targetWallet.name}`;
-                }
+                let amountColor = t.type === 'EXPENSE' ? 'text-rose-600' : (t.type === 'INCOME' ? 'text-emerald-600' : 'text-purple-600');
+                let walletDisplay = (t.type === 'TRANSFER' && targetWallet) ? `${wallet?.name} ➔ ${targetWallet.name}` : (wallet?.name || '-');
 
                 return `
                     <tr class="hover:bg-slate-50">
-                        <td class="p-3 text-slate-500">${formattedDate}</td>
+                        <td class="p-3 text-slate-500">${t.date || '-'}</td>
                         <td class="p-3 font-semibold ${t.owner === 'Suami' ? 'text-indigo-600' : 'text-rose-600'}">${t.owner}</td>
                         <td class="p-3">
                             <div class="font-bold text-slate-800">${t.category}</div>
@@ -812,11 +713,6 @@
                         </td>
                         <td class="p-3 text-slate-500">${walletDisplay}</td>
                         <td class="p-3 text-right font-bold ${amountColor}">${amountText}</td>
-                        <td class="p-3 text-center">
-                            <button onclick="deleteTransaction(${t.id})" class="text-rose-500 hover:text-rose-700">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </td>
                     </tr>
                 `;
             }).join('');
@@ -835,155 +731,68 @@
             if (viewMode === 'COMPARE') {
                 const categoriesSet = new Set(expenseTx.map(t => t.category));
                 const labels = Array.from(categoriesSet);
-
                 const husbandData = labels.map(cat => expenseTx.filter(t => t.category === cat && t.owner === 'Suami').reduce((acc, t) => acc + t.amount, 0));
                 const wifeData = labels.map(cat => expenseTx.filter(t => t.category === cat && t.owner === 'Istri').reduce((acc, t) => acc + t.amount, 0));
 
-                if (chartType === 'bar') {
-                    chartInstance = new Chart(ctx, {
-                        type: 'bar',
-                        data: {
-                            labels: labels,
-                            datasets: [
-                                { label: 'Suami', data: husbandData, backgroundColor: '#6366f1', borderRadius: 6 },
-                                { label: 'Istri', data: wifeData, backgroundColor: '#ec4899', borderRadius: 6 }
-                            ]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: { legend: { display: true, position: 'top' } }
-                        }
-                    });
-                } else {
-                    const totalHusband = husbandData.reduce((a, b) => a + b, 0);
-                    const totalWife = wifeData.reduce((a, b) => a + b, 0);
-
-                    chartInstance = new Chart(ctx, {
-                        type: chartType,
-                        data: {
-                            labels: ['Total Pengeluaran Suami', 'Total Pengeluaran Istri'],
-                            datasets: [{
-                                data: [totalHusband, totalWife],
-                                backgroundColor: ['#6366f1', '#ec4899']
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: { legend: { display: true, position: 'bottom' } }
-                        }
-                    });
-                }
-
+                chartInstance = new Chart(ctx, {
+                    type: chartType === 'bar' ? 'bar' : chartType,
+                    data: {
+                        labels: chartType === 'bar' ? labels : ['Suami', 'Istri'],
+                        datasets: chartType === 'bar' ? [
+                            { label: 'Suami', data: husbandData, backgroundColor: '#6366f1' },
+                            { label: 'Istri', data: wifeData, backgroundColor: '#ec4899' }
+                        ] : [{ data: [husbandData.reduce((a,b)=>a+b,0), wifeData.reduce((a,b)=>a+b,0)], backgroundColor: ['#6366f1', '#ec4899'] }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
             } else {
                 const expCategories = {};
-                expenseTx.forEach(t => {
-                    expCategories[t.category] = (expCategories[t.category] || 0) + t.amount;
-                });
-
+                expenseTx.forEach(t => { expCategories[t.category] = (expCategories[t.category] || 0) + t.amount; });
                 const labels = Object.keys(expCategories);
                 const data = Object.values(expCategories);
 
-                if (chartType === 'bar') {
-                    chartInstance = new Chart(ctx, {
-                        type: 'bar',
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                label: 'Pengeluaran (Rp)',
-                                data: data,
-                                backgroundColor: '#6366f1',
-                                borderRadius: 6
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: { legend: { display: false } }
-                        }
-                    });
-                } else {
-                    chartInstance = new Chart(ctx, {
-                        type: chartType,
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                data: data,
-                                backgroundColor: COLOR_PALETTE.slice(0, labels.length)
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: { legend: { display: true, position: 'right' } }
-                        }
-                    });
-                }
+                chartInstance = new Chart(ctx, {
+                    type: chartType,
+                    data: {
+                        labels: labels,
+                        datasets: [{ data: data, backgroundColor: COLOR_PALETTE.slice(0, labels.length) }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
             }
         }
 
-        function renderCategoriesManager() {
-            const expList = document.getElementById('expenseCatList');
-            const incList = document.getElementById('incomeCatList');
+        function handleSaveWallet(e) {
+            e.preventDefault();
+            const id = document.getElementById('editWalletId').value;
+            const name = document.getElementById('walName').value;
+            const balance = parseFloat(document.getElementById('walBalance').value);
 
-            expList.innerHTML = customExpenseCategories.map((c, idx) => `
-                <li class="py-2 flex items-center justify-between">
-                    <span class="font-medium text-slate-700">${c}</span>
-                    <div class="flex gap-2">
-                        <button onclick="editCategory('EXPENSE', ${idx})" class="text-indigo-600 hover:text-indigo-800"><i class="fa-solid fa-pen-to-square"></i></button>
-                        <button onclick="deleteCategory('EXPENSE', ${idx})" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash"></i></button>
+            if(id) {
+                const wallet = wallets.find(w => w.id === parseInt(id));
+                if(wallet) { wallet.name = name; wallet.balance = balance; }
+            } else {
+                wallets.push({ id: Date.now(), name, balance });
+            }
+
+            postToSheets({ action: "syncWallets", wallets: wallets });
+            renderWallets();
+            populateWalletOptions();
+            updateDashboard();
+            document.getElementById('editWalletId').value = '';
+            document.getElementById('walName').value = '';
+            document.getElementById('walBalance').value = '';
+        }
+
+        function renderWallets() {
+            document.getElementById('walletsList').innerHTML = wallets.map(w => `
+                <div class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-400">${w.name}</p>
+                        <p class="text-lg font-bold text-slate-800 mt-1">Rp ${w.balance.toLocaleString('id-ID')}</p>
                     </div>
-                </li>
+                </div>
             `).join('');
-
-            incList.innerHTML = customIncomeCategories.map((c, idx) => `
-                <li class="py-2 flex items-center justify-between">
-                    <span class="font-medium text-slate-700">${c}</span>
-                    <div class="flex gap-2">
-                        <button onclick="editCategory('INCOME', ${idx})" class="text-indigo-600 hover:text-indigo-800"><i class="fa-solid fa-pen-to-square"></i></button>
-                        <button onclick="deleteCategory('INCOME', ${idx})" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash"></i></button>
-                    </div>
-                </li>
-            `).join('');
-        }
-
-        function addCategory(type) {
-            const input = document.getElementById(type === 'EXPENSE' ? 'newExpenseCatInput' : 'newIncomeCatInput');
-            const val = input.value.trim();
-            if (!val) return;
-
-            const targetArr = type === 'EXPENSE' ? customExpenseCategories : customIncomeCategories;
-            if (targetArr.includes(val)) {
-                alert("Nama kategori sudah ada!");
-                return;
-            }
-
-            targetArr.push(val);
-            saveData();
-            input.value = '';
-            renderCategoriesManager();
-            populateCategoryOptions();
-        }
-
-        function editCategory(type, idx) {
-            const targetArr = type === 'EXPENSE' ? customExpenseCategories : customIncomeCategories;
-            const newName = prompt("Ubah nama kategori:", targetArr[idx]);
-            if (newName && newName.trim() !== "") {
-                targetArr[idx] = newName.trim();
-                saveData();
-                renderCategoriesManager();
-                populateCategoryOptions();
-            }
-        }
-
-        function deleteCategory(type, idx) {
-            if (!confirm("Yakin ingin menghapus kategori ini?")) return;
-            const targetArr = type === 'EXPENSE' ? customExpenseCategories : customIncomeCategories;
-            targetArr.splice(idx, 1);
-            saveData();
-            renderCategoriesManager();
-            populateCategoryOptions();
         }
 
         function handleAddSavings(e) {
@@ -994,7 +803,8 @@
             const target = parseFloat(document.getElementById('savTarget').value);
 
             savings.push({ id: Date.now(), name, owner, current, target });
-            saveData();
+            postToSheets({ action: "syncSavings", savings: savings });
+
             renderSavings();
             populateSavingOptions();
             document.getElementById('savName').value = '';
@@ -1003,8 +813,7 @@
         }
 
         function renderSavings() {
-            const grid = document.getElementById('savingsGrid');
-            grid.innerHTML = savings.map(s => {
+            document.getElementById('savingsGrid').innerHTML = savings.map(s => {
                 const percent = Math.min(100, Math.round((s.current / s.target) * 100)) || 0;
                 return `
                     <div class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm space-y-3">
@@ -1013,12 +822,7 @@
                                 <h4 class="font-bold text-slate-800 text-sm">${s.name}</h4>
                                 <span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-semibold">${s.owner}</span>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs font-bold text-amber-600">${percent}%</span>
-                                <button onclick="deleteSaving(${s.id})" class="text-rose-500 hover:text-rose-700 p-1 text-xs" title="Hapus Pos">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
-                            </div>
+                            <span class="text-xs font-bold text-amber-600">${percent}%</span>
                         </div>
                         <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                             <div class="bg-amber-500 h-full" style="width: ${percent}%"></div>
@@ -1032,19 +836,10 @@
             }).join('');
         }
 
-        function deleteSaving(id) {
-            if(!confirm("Yakin ingin menghapus pos tabungan ini?")) return;
-            savings = savings.filter(s => s.id !== id);
-            saveData();
-            renderSavings();
-            populateSavingOptions();
-        }
-
         function renderBudgeting() {
             const grid = document.getElementById('budgetGrid');
             const selMonth = parseInt(document.getElementById('budgetMonth').value);
             const selYear = parseInt(document.getElementById('budgetYear').value);
-
             const periodKey = `${selYear}-${String(selMonth + 1).padStart(2, '0')}`;
             if (!monthlyBudgets[periodKey]) monthlyBudgets[periodKey] = {};
 
@@ -1052,37 +847,14 @@
 
             grid.innerHTML = customExpenseCategories.map(cat => {
                 const limit = activeBudgetMap[cat] || 0;
-                
                 const spent = transactions
-                    .filter(t => {
-                        if (t.type !== 'EXPENSE' || t.category !== cat || !t.date) return false;
-                        const d = new Date(t.date);
-                        return d.getMonth() === selMonth && d.getFullYear() === selYear;
-                    })
+                    .filter(t => t.type === 'EXPENSE' && t.category === cat && t.date && new Date(t.date).getMonth() === selMonth && new Date(t.date).getFullYear() === selYear)
                     .reduce((acc, t) => acc + t.amount, 0);
 
-                const ratio = limit > 0 ? (spent / limit) * 100 : 0;
-                let cardBg = "bg-white border-slate-100";
-                let badgeColor = "text-slate-400";
-                let statusText = "Normal";
-
-                if(limit > 0) {
-                    if(ratio >= 90) {
-                        cardBg = "bg-rose-50 border-rose-200";
-                        badgeColor = "text-rose-600 font-bold";
-                        statusText = "Kritis (>90%)";
-                    } else if(ratio >= 50) {
-                        cardBg = "bg-amber-50 border-amber-200";
-                        badgeColor = "text-amber-600 font-bold";
-                        statusText = "Waspada (>50%)";
-                    }
-                }
-
                 return `
-                    <div class="${cardBg} p-4 rounded-xl border shadow-sm space-y-2">
+                    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm space-y-2">
                         <div class="flex justify-between items-center">
                             <h4 class="font-bold text-xs text-slate-700">${cat}</h4>
-                            <span class="text-[10px] ${badgeColor}">${statusText}</span>
                         </div>
                         <div class="flex items-center gap-2">
                             <input type="number" value="${limit}" onchange="updateMonthlyBudget('${cat}', this.value)" placeholder="Target Anggaran Bulan Ini..." class="text-xs border rounded px-2 py-1 flex-1 outline-none bg-white">
@@ -1101,107 +873,57 @@
             if (!monthlyBudgets[periodKey]) monthlyBudgets[periodKey] = {};
             monthlyBudgets[periodKey][category] = parseFloat(val) || 0;
 
-            saveData();
+            const budgetArr = [];
+            Object.keys(monthlyBudgets).forEach(pk => {
+                Object.keys(monthlyBudgets[pk]).forEach(c => {
+                    budgetArr.push({ periodKey: pk, category: c, amount: monthlyBudgets[pk][c] });
+                });
+            });
+
+            postToSheets({ action: "syncBudgets", budgets: budgetArr });
             renderBudgeting();
         }
 
-        function handleSaveWallet(e) {
-            e.preventDefault();
-            const id = document.getElementById('editWalletId').value;
-            const name = document.getElementById('walName').value;
-            const balance = parseFloat(document.getElementById('walBalance').value);
+        function renderCategoriesManager() {
+            document.getElementById('expenseCatList').innerHTML = customExpenseCategories.map((c, idx) => `
+                <li class="py-2 flex items-center justify-between"><span class="font-medium text-slate-700">${c}</span></li>
+            `).join('');
 
-            if(id) {
-                const wallet = wallets.find(w => w.id === parseInt(id));
-                if(wallet) {
-                    wallet.name = name;
-                    wallet.balance = balance;
-                }
-            } else {
-                wallets.push({ id: Date.now(), name, balance });
-            }
-
-            saveData();
-            renderWallets();
-            populateWalletOptions();
-            updateDashboard();
-            document.getElementById('editWalletId').value = '';
-            document.getElementById('walName').value = '';
-            document.getElementById('walBalance').value = '';
-            document.getElementById('walletBtn').textContent = 'Tambah Dompet';
-        }
-
-        function editWallet(id) {
-            const wallet = wallets.find(w => w.id === id);
-            if(wallet) {
-                document.getElementById('editWalletId').value = wallet.id;
-                document.getElementById('walName').value = wallet.name;
-                document.getElementById('walBalance').value = wallet.balance;
-                document.getElementById('walletBtn').textContent = 'Simpan Perubahan';
-            }
-        }
-
-        function deleteWallet(id) {
-            if(!confirm("Hapus dompet ini?")) return;
-            wallets = wallets.filter(w => w.id !== id);
-            saveData();
-            renderWallets();
-            populateWalletOptions();
-            updateDashboard();
-        }
-
-        function renderWallets() {
-            const list = document.getElementById('walletsList');
-            list.innerHTML = wallets.map(w => `
-                <div class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-semibold text-slate-400">${w.name}</p>
-                        <p class="text-lg font-bold text-slate-800 mt-1">Rp ${w.balance.toLocaleString('id-ID')}</p>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="editWallet(${w.id})" class="text-indigo-600 hover:text-indigo-800 p-1 text-xs" title="Edit">
-                            <i class="fa-solid fa-pen-to-square"></i>
-                        </button>
-                        <button onclick="deleteWallet(${w.id})" class="text-rose-500 hover:text-rose-700 p-1 text-xs" title="Hapus">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
+            document.getElementById('incomeCatList').innerHTML = customIncomeCategories.map((c, idx) => `
+                <li class="py-2 flex items-center justify-between"><span class="font-medium text-slate-700">${c}</span></li>
             `).join('');
         }
 
+        function addCategory(type) {
+            const input = document.getElementById(type === 'EXPENSE' ? 'newExpenseCatInput' : 'newIncomeCatInput');
+            const val = input.value.trim();
+            if (!val) return;
+
+            const targetArr = type === 'EXPENSE' ? customExpenseCategories : customIncomeCategories;
+            if (targetArr.includes(val)) return alert("Kategori sudah ada!");
+
+            targetArr.push(val);
+            postToSheets({ action: "syncCategories", expCategories: customExpenseCategories, incCategories: customIncomeCategories });
+
+            input.value = '';
+            renderCategoriesManager();
+            populateCategoryOptions();
+        }
+
         function renderUsersTable() {
-            const tbody = document.getElementById('userTableBody');
-            tbody.innerHTML = users.map(u => `
+            document.getElementById('userTableBody').innerHTML = users.map(u => `
                 <tr class="hover:bg-slate-50">
-                    <td class="p-3 font-bold text-slate-800">${u.name}</td>
-                    <td class="p-3 text-slate-500">${u.username}</td>
-                    <td class="p-3">
-                        <span class="text-[10px] px-2 py-0.5 rounded font-bold ${u.role === 'Suami' ? 'bg-indigo-100 text-indigo-700' : 'bg-rose-100 text-rose-700'}">${u.role}</span>
-                    </td>
-                    <td class="p-3 text-center">
-                        ${u.username === currentUser.username ? '<span class="text-xs text-slate-400">Akun Aktif</span>' : `
-                            <button onclick="deleteUser('${u.username}')" class="text-rose-500 hover:text-rose-700">
-                                <i class="fa-solid fa-trash"></i> Hapus
-                            </button>
-                        `}
-                    </td>
+                    <td class="p-3 font-bold text-slate-800">${u.Name || u.name}</td>
+                    <td class="p-3 text-slate-500">${u.Username || u.username}</td>
+                    <td class="p-3"><span class="text-[10px] px-2 py-0.5 rounded font-bold bg-indigo-100 text-indigo-700">${u.Role || u.role}</span></td>
+                    <td class="p-3 text-center"><span class="text-xs text-slate-400">Aktif</span></td>
                 </tr>
             `).join('');
         }
 
-        function deleteUser(username) {
-            if(!confirm(`Hapus akses akun ${username}?`)) return;
-            users = users.filter(u => u.username !== username);
-            saveData();
-            renderUsersTable();
-        }
-
         function exportCSV() {
             let csv = 'Tanggal,Jenis,Pemilik,Kategori,Nominal,Keterangan\n';
-            transactions.forEach(t => {
-                csv += `"${t.date || ''}","${t.type}","${t.owner}","${t.category}","${t.amount}","${t.note || ''}"\n`;
-            });
+            transactions.forEach(t => { csv += `"${t.date || ''}","${t.type}","${t.owner}","${t.category}","${t.amount}","${t.note || ''}"\n`; });
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
