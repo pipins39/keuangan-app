@@ -108,6 +108,12 @@
                     <button onclick="switchTab('budgeting')" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-800 text-left">
                         <i class="fa-solid fa-calculator w-5 text-sky-400"></i> Target Anggaran
                     </button>
+
+                    <!-- MENU DEBTS (HUTANG PIUTANG) -->
+                    <button onclick="switchTab('debts')" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-800 text-left">
+                        <i class="fa-solid fa-hand-holding-dollar w-5 text-rose-400"></i> Hutang & Piutang
+                    </button>
+
                     <button onclick="switchTab('wallets')" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-800 text-left">
                         <i class="fa-solid fa-building-columns w-5 text-purple-400"></i> Kelola Dompet
                     </button>
@@ -115,7 +121,7 @@
                         <i class="fa-solid fa-tags w-5 text-teal-400"></i> Kelola Kategori
                     </button>
                     <button onclick="switchTab('account')" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-800 text-left">
-                        <i class="fa-solid fa-user-gear w-5 text-rose-400"></i> Pengaturan Akun
+                        <i class="fa-solid fa-user-gear w-5 text-slate-400"></i> Pengaturan Akun
                     </button>
                 </nav>
             </div>
@@ -334,6 +340,64 @@
                 <div id="budgetGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
 
+            <!-- TAB DEBTS (HUTANG PIUTANG) -->
+            <div id="tab-debts" class="tab-content space-y-6 hidden">
+                <div>
+                    <h1 class="text-xl font-bold text-slate-800">Pencatatan Hutang & Piutang</h1>
+                    <p class="text-xs text-slate-500">Kelola pinjaman ke orang lain (Piutang) atau utang belanja/pinjaman (Hutang)</p>
+                </div>
+
+                <form onsubmit="handleAddDebt(event)" class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Jenis Catatan</label>
+                            <select id="debtType" required class="w-full text-xs border rounded-lg p-2.5 outline-none">
+                                <option value="HUTANG">Hutang (Kami Berhutang)</option>
+                                <option value="PIUTANG">Piutang (Orang Lain Berhutang ke Kami)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Pihak Terkait</label>
+                            <input type="text" id="debtPerson" required placeholder="Misal: Warung Makanan / Nama Orang" class="w-full text-xs border rounded-lg p-2.5 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Nominal (Rp)</label>
+                            <input type="number" id="debtAmount" required placeholder="0" class="w-full text-xs border rounded-lg p-2.5 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Jatuh Tempo (Opsional)</label>
+                            <input type="date" id="debtDueDate" class="w-full text-xs border rounded-lg p-2.5 outline-none">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Keterangan / Rincian</label>
+                        <input type="text" id="debtNote" placeholder="Misal: Belanja makanan catering utang, dll..." class="w-full text-xs border rounded-lg p-2.5 outline-none">
+                    </div>
+                    <button type="submit" class="bg-rose-600 hover:bg-rose-700 text-white font-medium text-xs px-6 py-2.5 rounded-lg">
+                        Tambah Catatan
+                    </button>
+                </form>
+
+                <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-slate-100 font-bold text-xs text-slate-700">Daftar Catatan Hutang & Piutang</div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-600">
+                            <thead class="bg-slate-50 border-b border-slate-100 uppercase font-semibold text-slate-500">
+                                <tr>
+                                    <th class="p-3">Pihak</th>
+                                    <th class="p-3">Jenis</th>
+                                    <th class="p-3">Keterangan</th>
+                                    <th class="p-3 text-right">Nominal</th>
+                                    <th class="p-3 text-center">Status</th>
+                                    <th class="p-3 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="debtsTableBody" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
             <!-- TAB 4: KELOLA DOMPET -->
             <div id="tab-wallets" class="tab-content space-y-6 hidden">
                 <div>
@@ -420,6 +484,7 @@
         let monthlyBudgets = {};
         let customExpenseCategories = [];
         let customIncomeCategories = [];
+        let debts = [];
 
         let chartInstance = null;
 
@@ -442,7 +507,8 @@
                     if(data.users && data.users.length > 0) users = data.users;
                     if(data.wallets && data.wallets.length > 0) wallets = data.wallets.map(w => ({ id: parseInt(w.ID), name: w.Name, balance: parseFloat(w.Balance) }));
                     if(data.savings && data.savings.length > 0) savings = data.savings.map(s => ({ id: parseInt(s.ID), name: s.Name, owner: s.Owner, current: parseFloat(s.Current), target: parseFloat(s.Target) }));
-                    
+                    if(data.debts && data.debts.length > 0) debts = data.debts.map(d => ({ id: parseInt(d.ID), type: d.Type, person: d.Person, amount: parseFloat(d.Amount), dueDate: d.DueDate, status: d.Status, note: d.Note }));
+
                     if(data.budgets && data.budgets.length > 0) {
                         monthlyBudgets = {};
                         data.budgets.forEach(b => {
@@ -463,7 +529,7 @@
                             type: t.Jenis,
                             owner: t.Pemilik,
                             category: t.Kategori,
-                            walletId: wallets.find(w => w.name === t.Dompet)?.id || 1,
+                            walletId: wallets.find(w => w.name === t.Dompet)?.id || (wallets[0]?.id || 1),
                             targetWalletId: wallets.find(w => w.name === t.DompetTujuan)?.id || null,
                             amount: parseFloat(t.Nominal),
                             note: t.Keterangan
@@ -583,6 +649,7 @@
             if(tabId === 'dashboard') updateDashboard();
             if(tabId === 'savings') renderSavings();
             if(tabId === 'budgeting') renderBudgeting();
+            if(tabId === 'debts') renderDebts();
             if(tabId === 'wallets') renderWallets();
             if(tabId === 'categories') renderCategoriesManager();
             if(tabId === 'account') renderUsersTable();
@@ -618,7 +685,6 @@
                 savings.map(s => `<option value="${s.id}">${s.name} (Saldo: Rp ${s.current.toLocaleString('id-ID')})</option>`).join('');
         }
 
-        // AKSI TAMBAH & EDIT TRANSAKSI
         function handleAddTransaction(e) {
             e.preventDefault();
             const editId = document.getElementById('editTxId').value;
@@ -635,6 +701,7 @@
                 const oldTxIndex = transactions.findIndex(t => t.id === parseInt(editId));
                 if(oldTxIndex > -1) {
                     revertTxBalance(transactions[oldTxIndex]);
+                    postToSheets({ action: "deleteTransaction", id: parseInt(editId) });
                     transactions.splice(oldTxIndex, 1);
                 }
             }
@@ -702,20 +769,20 @@
             }
         }
 
-        // FITUR HAPUS TRANSAKSI
         function deleteTransaction(id) {
             if(!confirm("Yakin ingin menghapus transaksi ini?")) return;
             const txIndex = transactions.findIndex(t => t.id === id);
             if(txIndex > -1) {
                 const tx = transactions[txIndex];
-                revertTxBalance(tx); // Kembalikan saldo dompet
+                revertTxBalance(tx);
                 transactions.splice(txIndex, 1);
                 
                 populateWalletOptions();
                 updateDashboard();
 
+                postToSheets({ action: "deleteTransaction", id: id });
                 postToSheets({ action: "syncWallets", wallets: wallets });
-                alert("Transaksi berhasil dihapus!");
+                alert("Transaksi berhasil dihapus dari sistem!");
             }
         }
 
@@ -960,6 +1027,7 @@
             }).join('');
         }
 
+        // PERBAIKAN SINKRONISASI TARGET ANGGARAN KONSISTEN DARI EXCEL
         function renderBudgeting() {
             const grid = document.getElementById('budgetGrid');
             const selMonth = parseInt(document.getElementById('budgetMonth').value);
@@ -1033,6 +1101,98 @@
 
             postToSheets({ action: "syncBudgets", budgets: budgetArr });
             renderBudgeting();
+        }
+
+        // FITUR LOGIC HUTANG PIUTANG
+        function handleAddDebt(e) {
+            e.preventDefault();
+            const type = document.getElementById('debtType').value;
+            const person = document.getElementById('debtPerson').value;
+            const amount = parseFloat(document.getElementById('debtAmount').value);
+            const dueDate = document.getElementById('debtDueDate').value || '-';
+            const note = document.getElementById('debtNote').value || '-';
+
+            debts.push({ id: Date.now(), type, person, amount, dueDate, status: 'BELUM LUNAS', note });
+            postToSheets({ action: "syncDebts", debts: debts });
+
+            document.getElementById('debtPerson').value = '';
+            document.getElementById('debtAmount').value = '';
+            document.getElementById('debtNote').value = '';
+            document.getElementById('debtDueDate').value = '';
+
+            renderDebts();
+            alert("Catatan Hutang/Piutang tersimpan!");
+        }
+
+        function settleDebt(id) {
+            const debt = debts.find(d => d.id === id);
+            if(!debt) return;
+
+            if(!wallets.length) return alert("Silakan buat dompet terlebih dahulu di Kelola Dompet!");
+
+            let walletNames = wallets.map((w, idx) => `${idx + 1}. ${w.name} (Saldo: Rp ${w.balance.toLocaleString('id-ID')})`).join('\n');
+            let chosenIdx = prompt(`Pilih nomor Dompet untuk pelunasan ${debt.type.toLowerCase()} Rp ${debt.amount.toLocaleString('id-ID')}:\n\n${walletNames}`);
+            
+            if(!chosenIdx) return;
+            let wallet = wallets[parseInt(chosenIdx) - 1];
+
+            if(wallet) {
+                if(debt.type === 'HUTANG') {
+                    wallet.balance -= debt.amount; // Bayar utang = saldo dompet berkurang
+                } else {
+                    wallet.balance += debt.amount; // Piutang dibayar orang = saldo dompet bertambah
+                }
+
+                debt.status = 'LUNAS';
+
+                postToSheets({ action: "syncDebts", debts: debts });
+                postToSheets({ action: "syncWallets", wallets: wallets });
+
+                renderDebts();
+                populateWalletOptions();
+                updateDashboard();
+                alert(`Pelunasan berhasil diproses dari dompet ${wallet.name}!`);
+            } else {
+                alert("Nomor dompet tidak valid!");
+            }
+        }
+
+        function deleteDebt(id) {
+            if(!confirm("Hapus catatan ini?")) return;
+            debts = debts.filter(d => d.id !== id);
+            postToSheets({ action: "syncDebts", debts: debts });
+            renderDebts();
+        }
+
+        function renderDebts() {
+            document.getElementById('debtsTableBody').innerHTML = debts.map(d => `
+                <tr class="hover:bg-slate-50">
+                    <td class="p-3 font-bold text-slate-800">${d.person}</td>
+                    <td class="p-3">
+                        <span class="text-[10px] px-2 py-0.5 rounded font-bold ${d.type === 'HUTANG' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}">${d.type}</span>
+                    </td>
+                    <td class="p-3 text-slate-600">
+                        <div>${d.note}</div>
+                        <div class="text-[10px] text-slate-400">Jatuh Tempo: ${d.dueDate}</div>
+                    </td>
+                    <td class="p-3 text-right font-bold text-slate-800">Rp ${d.amount.toLocaleString('id-ID')}</td>
+                    <td class="p-3 text-center">
+                        <span class="text-[10px] px-2 py-0.5 rounded font-bold ${d.status === 'LUNAS' ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'}">${d.status}</span>
+                    </td>
+                    <td class="p-3 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            ${d.status === 'BELUM LUNAS' ? `
+                                <button onclick="settleDebt(${d.id})" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-2 py-1 rounded">
+                                    Pelunasan
+                                </button>
+                            ` : ''}
+                            <button onclick="deleteDebt(${d.id})" class="text-rose-500 hover:text-rose-700 p-1" title="Hapus">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
         }
 
         function renderCategoriesManager() {
