@@ -746,7 +746,6 @@
             if(editId) {
                 const oldTxIndex = transactions.findIndex(t => t.id === parseInt(editId));
                 if(oldTxIndex > -1) {
-                    revertTxBalance(transactions[oldTxIndex]);
                     postToSheets({ action: "deleteTransaction", id: parseInt(editId) });
                     transactions.splice(oldTxIndex, 1);
                 }
@@ -755,17 +754,10 @@
             const isSavingSource = rawWalletValue.startsWith("S_");
             const sourceId = parseInt(rawWalletValue.replace("W_", "").replace("S_", ""));
             let sourceName = "";
-            let sourceObj = null;
-
-            if(isSavingSource) {
-                sourceObj = savings.find(s => s.id === sourceId);
-                if(sourceObj) sourceName = `[Tabungan] ${sourceObj.name}`;
-            } else {
-                sourceObj = wallets.find(w => w.id === sourceId);
-                if(sourceObj) sourceName = sourceObj.name;
-            }
+            let sourceObj = isSavingSource ? savings.find(s => s.id === sourceId) : wallets.find(w => w.id === sourceId);
 
             if(!sourceObj) return alert("Sumber dana tidak ditemukan!");
+            sourceName = isSavingSource ? `[Tabungan] ${sourceObj.name}` : sourceObj.name;
 
             let targetWalletName = "-";
             let categoryName = "Transfer / Mutasi";
@@ -780,7 +772,6 @@
                 let targetObj = isTargetSaving ? savings.find(s => s.id === targetId) : wallets.find(w => w.id === targetId);
 
                 if(!targetObj) return alert("Tujuan transfer tidak ditemukan!");
-
                 targetWalletName = isTargetSaving ? `[Tabungan] ${targetObj.name}` : targetObj.name;
 
                 if(isSavingSource) sourceObj.current -= amount; else sourceObj.balance -= amount;
@@ -800,6 +791,7 @@
                 transactions.unshift({ id: txId, type, owner, amount, category: categoryName, walletId: rawWalletValue, date, note });
             }
             
+            document.getElementById('editTxId').value = ''; 
             resetTxForm();
             populateWalletOptions();
             updateDashboard();
@@ -818,6 +810,8 @@
         function editTransaction(id) {
             const tx = transactions.find(t => t.id === id);
             if(tx) {
+                revertTxBalance(tx);
+
                 document.getElementById('editTxId').value = tx.id;
                 document.getElementById('txType').value = tx.type;
                 handleTxTypeChange();
@@ -837,6 +831,10 @@
                 document.getElementById('formTxTitle').textContent = "Edit Transaksi";
                 document.getElementById('submitTxBtn').textContent = "Simpan Perubahan";
                 document.getElementById('cancelTxBtn').classList.remove('hidden');
+
+                populateWalletOptions();
+                updateDashboard();
+                renderSavings();
 
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
@@ -881,12 +879,40 @@
         }
 
         function resetTxForm() {
+            const editId = document.getElementById('editTxId').value;
+            
+            if(editId) {
+                const tx = transactions.find(t => t.id === parseInt(editId));
+                if(tx) {
+                    const isSavingSource = String(tx.walletId).startsWith("S_");
+                    const sourceId = parseInt(String(tx.walletId).replace("W_", "").replace("S_", ""));
+                    let sourceObj = isSavingSource ? savings.find(s => s.id === sourceId) : wallets.find(w => w.id === sourceId);
+
+                    if(tx.type === 'TRANSFER') {
+                        const isTargetSaving = String(tx.targetWalletId).startsWith("S_");
+                        const targetId = parseInt(String(tx.targetWalletId).replace("W_", "").replace("S_", ""));
+                        let targetObj = isTargetSaving ? savings.find(s => s.id === targetId) : wallets.find(w => w.id === targetId);
+
+                        if(sourceObj) { if(isSavingSource) sourceObj.current -= tx.amount; else sourceObj.balance -= tx.amount; }
+                        if(targetObj) { if(isTargetSaving) targetObj.current += tx.amount; else targetObj.balance += tx.amount; }
+                    } else if(tx.type === 'EXPENSE') {
+                        if(sourceObj) { if(isSavingSource) sourceObj.current -= tx.amount; else sourceObj.balance -= tx.amount; }
+                    } else if(tx.type === 'INCOME') {
+                        if(sourceObj) { if(isSavingSource) sourceObj.current += tx.amount; else sourceObj.balance += tx.amount; }
+                    }
+                }
+            }
+
             document.getElementById('editTxId').value = '';
             document.getElementById('txAmount').value = '';
             document.getElementById('txNote').value = '';
             document.getElementById('formTxTitle').textContent = "Catat Transaksi Baru / Transfer Dana";
             document.getElementById('submitTxBtn').textContent = "Simpan Transaksi";
             document.getElementById('cancelTxBtn').classList.add('hidden');
+            
+            populateWalletOptions();
+            updateDashboard();
+            renderSavings();
         }
 
         function updateDashboard() {
@@ -1196,7 +1222,6 @@
             renderBudgeting();
         }
 
-        // HUTANG PIUTANG DENGAN KATEGORI DOMPET ATAU POS TABUNGAN
         function handleDebtSourceTypeChange() {
             const sourceType = document.getElementById('debtSourceType').value;
             const sourceSelect = document.getElementById('debtSourceId');
@@ -1317,10 +1342,42 @@
         }
 
         function deleteDebt(id) {
-            if(!confirm("Hapus catatan hutang/piutang ini?")) return;
-            debts = debts.filter(d => d.id !== id);
-            postToSheets({ action: "syncDebts", debts: debts });
-            renderDebts();
+            if(!confirm("Hapus catatan hutang/piutang ini? Saldo dompet/tabungan akan dikembalikan.")) return;
+            
+            const debtIndex = debts.findIndex(d => d.id === id);
+            if(debtIndex > -1) {
+                const debt = debts[debtIndex];
+
+                if(debt.status === 'BELUM LUNAS') {
+                    let sourceObj = null;
+                    if(debt.sourceType === 'WALLET') {
+                        sourceObj = wallets.find(w => w.id === debt.sourceId);
+                        if(sourceObj) {
+                            if (debt.type === 'HUTANG') sourceObj.balance -= debt.amount;
+                            else sourceObj.balance += debt.amount;
+                        }
+                    } else {
+                        sourceObj = savings.find(s => s.id === debt.sourceId);
+                        if(sourceObj) {
+                            if (debt.type === 'HUTANG') sourceObj.current -= debt.amount;
+                            else sourceObj.current += debt.amount;
+                        }
+                    }
+                }
+
+                debts.splice(debtIndex, 1);
+
+                postToSheets({ action: "syncDebts", debts: debts });
+                postToSheets({ action: "syncWallets", wallets: wallets });
+                postToSheets({ action: "syncSavings", savings: savings });
+
+                renderDebts();
+                populateWalletOptions();
+                populateSavingOptions();
+                updateDashboard();
+                renderSavings();
+                alert("Catatan berhasil dihapus dan saldo telah disesuaikan!");
+            }
         }
 
         function renderDebts() {
