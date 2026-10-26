@@ -108,12 +108,9 @@
                     <button onclick="switchTab('budgeting')" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-800 text-left">
                         <i class="fa-solid fa-calculator w-5 text-sky-400"></i> Target Anggaran
                     </button>
-
-                    <!-- MENU DEBTS (HUTANG PIUTANG) -->
                     <button onclick="switchTab('debts')" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-800 text-left">
                         <i class="fa-solid fa-hand-holding-dollar w-5 text-rose-400"></i> Hutang & Piutang
                     </button>
-
                     <button onclick="switchTab('wallets')" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-800 text-left">
                         <i class="fa-solid fa-building-columns w-5 text-purple-400"></i> Kelola Dompet
                     </button>
@@ -340,19 +337,19 @@
                 <div id="budgetGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
 
-            <!-- TAB DEBTS (HUTANG PIUTANG) -->
+            <!-- TAB DEBTS (HUTANG PIUTANG DENGAN DOMPET / TABUNGAN & TANGGAL PENCATATAN) -->
             <div id="tab-debts" class="tab-content space-y-6 hidden">
                 <div>
                     <h1 class="text-xl font-bold text-slate-800">Pencatatan Hutang & Piutang</h1>
-                    <p class="text-xs text-slate-500">Kelola pinjaman ke orang lain (Piutang) atau utang belanja/pinjaman (Hutang)</p>
+                    <p class="text-xs text-slate-500">Pilih sumber dana dari Rekening/Dompet atau Pos Tabungan</p>
                 </div>
 
                 <form onsubmit="handleAddDebt(event)" class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Jenis Catatan</label>
                             <select id="debtType" required class="w-full text-xs border rounded-lg p-2.5 outline-none">
-                                <option value="HUTANG">Hutang (Kami Berhutang)</option>
+                                <option value="HUTANG">Hutang (Kami Berhutang / Terima Pinjaman)</option>
                                 <option value="PIUTANG">Piutang (Orang Lain Berhutang ke Kami)</option>
                             </select>
                         </div>
@@ -364,17 +361,32 @@
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Nominal (Rp)</label>
                             <input type="number" id="debtAmount" required placeholder="0" class="w-full text-xs border rounded-lg p-2.5 outline-none">
                         </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Jatuh Tempo (Opsional)</label>
-                            <input type="date" id="debtDueDate" class="w-full text-xs border rounded-lg p-2.5 outline-none">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Pilih Tipe Sumber Dana</label>
+                            <select id="debtSourceType" onchange="handleDebtSourceTypeChange()" required class="w-full text-xs border rounded-lg p-2.5 outline-none">
+                                <option value="WALLET">Dompet / Rekening Bank</option>
+                                <option value="SAVING">Pos Tabungan</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Sumber Dana Spesifik</label>
+                            <select id="debtSourceId" required class="w-full text-xs border rounded-lg p-2.5 outline-none"></select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Tanggal Pencatatan</label>
+                            <input type="date" id="debtDate" required class="w-full text-xs border rounded-lg p-2.5 outline-none">
                         </div>
                     </div>
+
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Keterangan / Rincian</label>
-                        <input type="text" id="debtNote" placeholder="Misal: Belanja makanan catering utang, dll..." class="w-full text-xs border rounded-lg p-2.5 outline-none">
+                        <input type="text" id="debtNote" placeholder="Misal: Pinjam untuk modal, Belanja catering utang, dll..." class="w-full text-xs border rounded-lg p-2.5 outline-none">
                     </div>
                     <button type="submit" class="bg-rose-600 hover:bg-rose-700 text-white font-medium text-xs px-6 py-2.5 rounded-lg">
-                        Tambah Catatan
+                        Simpan Catatan & Update Saldo
                     </button>
                 </form>
 
@@ -384,8 +396,10 @@
                         <table class="w-full text-left text-xs text-slate-600">
                             <thead class="bg-slate-50 border-b border-slate-100 uppercase font-semibold text-slate-500">
                                 <tr>
+                                    <th class="p-3">Tanggal Catat</th>
                                     <th class="p-3">Pihak</th>
                                     <th class="p-3">Jenis</th>
+                                    <th class="p-3">Sumber Dana</th>
                                     <th class="p-3">Keterangan</th>
                                     <th class="p-3 text-right">Nominal</th>
                                     <th class="p-3 text-center">Status</th>
@@ -489,7 +503,9 @@
         let chartInstance = null;
 
         window.onload = function() {
-            document.getElementById('txDate').value = new Date().toISOString().slice(0, 10);
+            const today = new Date().toISOString().slice(0, 10);
+            document.getElementById('txDate').value = today;
+            document.getElementById('debtDate').value = today;
             initMonthYearDropdowns();
             loadOnlineData();
         };
@@ -507,7 +523,21 @@
                     if(data.users && data.users.length > 0) users = data.users;
                     if(data.wallets && data.wallets.length > 0) wallets = data.wallets.map(w => ({ id: parseInt(w.ID), name: w.Name, balance: parseFloat(w.Balance) }));
                     if(data.savings && data.savings.length > 0) savings = data.savings.map(s => ({ id: parseInt(s.ID), name: s.Name, owner: s.Owner, current: parseFloat(s.Current), target: parseFloat(s.Target) }));
-                    if(data.debts && data.debts.length > 0) debts = data.debts.map(d => ({ id: parseInt(d.ID), type: d.Type, person: d.Person, amount: parseFloat(d.Amount), dueDate: d.DueDate, status: d.Status, note: d.Note }));
+                    
+                    if(data.debts && data.debts.length > 0) {
+                        debts = data.debts.map(d => ({
+                            id: parseInt(d.ID),
+                            type: d.Type,
+                            person: d.Person,
+                            amount: parseFloat(d.Amount),
+                            date: String(d.Date).slice(0, 10),
+                            sourceType: d.SourceType || 'WALLET',
+                            sourceId: parseInt(d.SourceId),
+                            sourceName: d.SourceName,
+                            status: d.Status,
+                            note: d.Note
+                        }));
+                    }
 
                     if(data.budgets && data.budgets.length > 0) {
                         monthlyBudgets = {};
@@ -639,6 +669,7 @@
             populateCategoryOptions();
             populateWalletOptions();
             populateSavingOptions();
+            handleDebtSourceTypeChange();
             switchTab('dashboard');
         }
 
@@ -678,11 +709,13 @@
                 : '<option value="">-- Belum ada dompet --</option>';
             document.getElementById('txWallet').innerHTML = options;
             document.getElementById('txTargetWallet').innerHTML = options;
+            handleDebtSourceTypeChange();
         }
 
         function populateSavingOptions() {
             document.getElementById('txSaving').innerHTML = '<option value="">-- Tanpa Pos Tabungan --</option>' + 
                 savings.map(s => `<option value="${s.id}">${s.name} (Saldo: Rp ${s.current.toLocaleString('id-ID')})</option>`).join('');
+            handleDebtSourceTypeChange();
         }
 
         function handleAddTransaction(e) {
@@ -1027,7 +1060,6 @@
             }).join('');
         }
 
-        // PERBAIKAN SINKRONISASI TARGET ANGGARAN KONSISTEN DARI EXCEL
         function renderBudgeting() {
             const grid = document.getElementById('budgetGrid');
             const selMonth = parseInt(document.getElementById('budgetMonth').value);
@@ -1103,62 +1135,128 @@
             renderBudgeting();
         }
 
-        // FITUR LOGIC HUTANG PIUTANG
+        // HUTANG PIUTANG DENGAN KATEGORI DOMPET ATAU POS TABUNGAN
+        function handleDebtSourceTypeChange() {
+            const sourceType = document.getElementById('debtSourceType').value;
+            const sourceSelect = document.getElementById('debtSourceId');
+            
+            if (sourceType === 'WALLET') {
+                sourceSelect.innerHTML = wallets.length > 0 
+                    ? wallets.map(w => `<option value="${w.id}">${w.name} (Saldo: Rp ${w.balance.toLocaleString('id-ID')})</option>`).join('')
+                    : '<option value="">-- Belum ada dompet --</option>';
+            } else {
+                sourceSelect.innerHTML = savings.length > 0 
+                    ? savings.map(s => `<option value="${s.id}">${s.name} (Saldo: Rp ${s.current.toLocaleString('id-ID')})</option>`).join('')
+                    : '<option value="">-- Belum ada pos tabungan --</option>';
+            }
+        }
+
         function handleAddDebt(e) {
             e.preventDefault();
             const type = document.getElementById('debtType').value;
             const person = document.getElementById('debtPerson').value;
             const amount = parseFloat(document.getElementById('debtAmount').value);
-            const dueDate = document.getElementById('debtDueDate').value || '-';
+            const date = document.getElementById('debtDate').value;
+            const sourceType = document.getElementById('debtSourceType').value;
+            const sourceId = parseInt(document.getElementById('debtSourceId').value);
             const note = document.getElementById('debtNote').value || '-';
 
-            debts.push({ id: Date.now(), type, person, amount, dueDate, status: 'BELUM LUNAS', note });
+            if(!sourceId) return alert("Silakan pilih sumber dana yang valid!");
+
+            let sourceObj = null;
+            if(sourceType === 'WALLET') {
+                sourceObj = wallets.find(w => w.id === sourceId);
+                if(sourceObj) {
+                    if (type === 'HUTANG') sourceObj.balance += amount;
+                    else sourceObj.balance -= amount;
+                }
+            } else {
+                sourceObj = savings.find(s => s.id === sourceId);
+                if(sourceObj) {
+                    if (type === 'HUTANG') sourceObj.current += amount;
+                    else sourceObj.current -= amount;
+                }
+            }
+
+            if(!sourceObj) return alert("Sumber dana tidak ditemukan!");
+
+            const newDebt = {
+                id: Date.now(),
+                type,
+                person,
+                amount,
+                date,
+                sourceType,
+                sourceId,
+                sourceName: sourceObj.name,
+                status: 'BELUM LUNAS',
+                note
+            };
+
+            debts.push(newDebt);
+
             postToSheets({ action: "syncDebts", debts: debts });
+            if(sourceType === 'WALLET') postToSheets({ action: "syncWallets", wallets: wallets });
+            else postToSheets({ action: "syncSavings", savings: savings });
 
             document.getElementById('debtPerson').value = '';
             document.getElementById('debtAmount').value = '';
             document.getElementById('debtNote').value = '';
-            document.getElementById('debtDueDate').value = '';
 
             renderDebts();
-            alert("Catatan Hutang/Piutang tersimpan!");
+            populateWalletOptions();
+            populateSavingOptions();
+            updateDashboard();
+            alert(`Catatan ${type.toLowerCase()} berhasil disimpan & saldo ${sourceObj.name} diperbarui!`);
         }
 
         function settleDebt(id) {
             const debt = debts.find(d => d.id === id);
             if(!debt) return;
 
-            if(!wallets.length) return alert("Silakan buat dompet terlebih dahulu di Kelola Dompet!");
+            const targetType = prompt("Pilih lokasi pelunasan dana:\n1. Dompet/Rekening\n2. Pos Tabungan\n\nKetik angka 1 atau 2:", "1");
+            if(!targetType) return;
 
-            let walletNames = wallets.map((w, idx) => `${idx + 1}. ${w.name} (Saldo: Rp ${w.balance.toLocaleString('id-ID')})`).join('\n');
-            let chosenIdx = prompt(`Pilih nomor Dompet untuk pelunasan ${debt.type.toLowerCase()} Rp ${debt.amount.toLocaleString('id-ID')}:\n\n${walletNames}`);
-            
-            if(!chosenIdx) return;
-            let wallet = wallets[parseInt(chosenIdx) - 1];
-
-            if(wallet) {
-                if(debt.type === 'HUTANG') {
-                    wallet.balance -= debt.amount; // Bayar utang = saldo dompet berkurang
-                } else {
-                    wallet.balance += debt.amount; // Piutang dibayar orang = saldo dompet bertambah
+            if(targetType === "1") {
+                if(!wallets.length) return alert("Belum ada dompet terdaftar!");
+                let list = wallets.map((w, idx) => `${idx + 1}. ${w.name} (Saldo: Rp ${w.balance.toLocaleString('id-ID')})`).join('\n');
+                let idx = prompt(`Pilih nomor Dompet:\n\n${list}`);
+                if(!idx) return;
+                let wallet = wallets[parseInt(idx) - 1];
+                if(wallet) {
+                    if(debt.type === 'HUTANG') wallet.balance -= debt.amount;
+                    else wallet.balance += debt.amount;
+                    
+                    debt.status = 'LUNAS';
+                    postToSheets({ action: "syncDebts", debts: debts });
+                    postToSheets({ action: "syncWallets", wallets: wallets });
+                    alert(`Pelunasan berhasil diproses ke Dompet ${wallet.name}!`);
                 }
-
-                debt.status = 'LUNAS';
-
-                postToSheets({ action: "syncDebts", debts: debts });
-                postToSheets({ action: "syncWallets", wallets: wallets });
-
-                renderDebts();
-                populateWalletOptions();
-                updateDashboard();
-                alert(`Pelunasan berhasil diproses dari dompet ${wallet.name}!`);
-            } else {
-                alert("Nomor dompet tidak valid!");
+            } else if(targetType === "2") {
+                if(!savings.length) return alert("Belum ada pos tabungan terdaftar!");
+                let list = savings.map((s, idx) => `${idx + 1}. ${s.name} (Saldo: Rp ${s.current.toLocaleString('id-ID')})`).join('\n');
+                let idx = prompt(`Pilih nomor Pos Tabungan:\n\n${list}`);
+                if(!idx) return;
+                let saving = savings[parseInt(idx) - 1];
+                if(saving) {
+                    if(debt.type === 'HUTANG') saving.current -= debt.amount;
+                    else saving.current += debt.amount;
+                    
+                    debt.status = 'LUNAS';
+                    postToSheets({ action: "syncDebts", debts: debts });
+                    postToSheets({ action: "syncSavings", savings: savings });
+                    alert(`Pelunasan berhasil diproses ke Pos Tabungan ${saving.name}!`);
+                }
             }
+
+            renderDebts();
+            renderSavings();
+            populateWalletOptions();
+            updateDashboard();
         }
 
         function deleteDebt(id) {
-            if(!confirm("Hapus catatan ini?")) return;
+            if(!confirm("Hapus catatan hutang/piutang ini?")) return;
             debts = debts.filter(d => d.id !== id);
             postToSheets({ action: "syncDebts", debts: debts });
             renderDebts();
@@ -1167,14 +1265,16 @@
         function renderDebts() {
             document.getElementById('debtsTableBody').innerHTML = debts.map(d => `
                 <tr class="hover:bg-slate-50">
+                    <td class="p-3 text-slate-500">${d.date || '-'}</td>
                     <td class="p-3 font-bold text-slate-800">${d.person}</td>
                     <td class="p-3">
                         <span class="text-[10px] px-2 py-0.5 rounded font-bold ${d.type === 'HUTANG' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}">${d.type}</span>
                     </td>
                     <td class="p-3 text-slate-600">
-                        <div>${d.note}</div>
-                        <div class="text-[10px] text-slate-400">Jatuh Tempo: ${d.dueDate}</div>
+                        <span class="font-semibold">${d.sourceName || '-'}</span>
+                        <span class="text-[10px] text-slate-400 block">(${d.sourceType === 'WALLET' ? 'Dompet' : 'Tabungan'})</span>
                     </td>
+                    <td class="p-3 text-slate-600">${d.note}</td>
                     <td class="p-3 text-right font-bold text-slate-800">Rp ${d.amount.toLocaleString('id-ID')}</td>
                     <td class="p-3 text-center">
                         <span class="text-[10px] px-2 py-0.5 rounded font-bold ${d.status === 'LUNAS' ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'}">${d.status}</span>
