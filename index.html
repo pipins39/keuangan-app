@@ -267,7 +267,12 @@
                 </div>
 
                 <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-                    <div class="p-4 border-b border-slate-100 font-bold text-xs text-slate-700">Daftar Riwayat Transaksi</div>
+                    <div class="p-4 border-b border-slate-100 font-bold text-xs text-slate-700 flex justify-between items-center">
+                        <span>Daftar Riwayat Transaksi</span>
+                        <span id="editNoticeBadge" class="hidden text-[11px] bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full font-semibold animate-pulse">
+                            ⚠️ Mode Edit Aktif (Hapus dinonaktifkan)
+                        </span>
+                    </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-xs text-slate-600">
                             <thead class="bg-slate-50 border-b border-slate-100 uppercase font-semibold text-slate-500">
@@ -500,6 +505,7 @@
         let customIncomeCategories = [];
         let debts = [];
 
+        let isEditingTx = false; // Penanda apakah sedang dalam mode edit transaksi
         let chartInstance = null;
 
         window.onload = function() {
@@ -791,6 +797,7 @@
                 transactions.unshift({ id: txId, type, owner, amount, category: categoryName, walletId: rawWalletValue, date, note });
             }
             
+            isEditingTx = false; // Matikan mode edit setelah simpan berhasil
             document.getElementById('editTxId').value = ''; 
             resetTxForm();
             populateWalletOptions();
@@ -808,8 +815,14 @@
         }
 
         function editTransaction(id) {
+            if(isEditingTx) {
+                alert("Kamu sedang dalam mode edit! Selesaikan atau klik 'Batal Edit' terlebih dahulu.");
+                return;
+            }
+
             const tx = transactions.find(t => t.id === id);
             if(tx) {
+                isEditingTx = true; // Aktifkan penanda mode edit
                 revertTxBalance(tx);
 
                 document.getElementById('editTxId').value = tx.id;
@@ -841,13 +854,17 @@
         }
 
         function deleteTransaction(id) {
+            if(isEditingTx) {
+                alert("Tidak dapat menghapus transaksi saat mode edit aktif! Selesaikan atau batalkan edit terlebih dahulu.");
+                return;
+            }
+
             if(!confirm("Yakin ingin menghapus transaksi ini? Saldo dompet/tabungan akan dikembalikan.")) return;
             const txIndex = transactions.findIndex(t => t.id === id);
             if(txIndex > -1) {
                 const tx = transactions[txIndex];
                 
                 revertTxBalance(tx);
-                
                 transactions.splice(txIndex, 1);
                 
                 populateWalletOptions();
@@ -884,7 +901,7 @@
         function resetTxForm() {
             const editId = document.getElementById('editTxId').value;
             
-            if(editId) {
+            if(editId && isEditingTx) {
                 const tx = transactions.find(t => t.id === parseInt(editId));
                 if(tx) {
                     const isSavingSource = String(tx.walletId).startsWith("S_");
@@ -906,6 +923,7 @@
                 }
             }
 
+            isEditingTx = false; // Reset mode edit menjadi non-aktif
             document.getElementById('editTxId').value = '';
             document.getElementById('txAmount').value = '';
             document.getElementById('txNote').value = '';
@@ -924,6 +942,10 @@
             const selMonth = parseInt(document.getElementById('filterMonth').value);
             const selYear = parseInt(document.getElementById('filterYear').value);
             const currentMonthStr = new Date().toISOString().slice(0, 7);
+
+            // Tampilkan badge pemberitahuan jika sedang mode edit
+            const editBadge = document.getElementById('editNoticeBadge');
+            if (editBadge) editBadge.classList.toggle('hidden', !isEditingTx);
 
             let filteredTx = transactions.filter(t => {
                 const matchOwner = ownerFilter === 'ALL' || t.owner === ownerFilter;
@@ -964,6 +986,11 @@
                 let amountText = `Rp ${t.amount.toLocaleString('id-ID')}`;
                 let amountColor = t.type === 'EXPENSE' ? 'text-rose-600' : (t.type === 'INCOME' ? 'text-emerald-600' : 'text-purple-600');
 
+                // Jika sedang mode edit, nonaktifkan tombol hapus pada tabel
+                const deleteBtnHtml = isEditingTx
+                    ? `<button disabled class="text-slate-300 cursor-not-allowed p-1" title="Selesaikan edit terlebih dahulu"><i class="fa-solid fa-trash"></i></button>`
+                    : `<button onclick="deleteTransaction(${t.id})" class="text-rose-500 hover:text-rose-700 p-1" title="Hapus Transaksi"><i class="fa-solid fa-trash"></i></button>`;
+
                 return `
                     <tr class="hover:bg-slate-50">
                         <td class="p-3 text-slate-500">${t.date || '-'}</td>
@@ -979,9 +1006,7 @@
                                 <button onclick="editTransaction(${t.id})" class="text-indigo-600 hover:text-indigo-800 p-1" title="Edit Transaksi">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
-                                <button onclick="deleteTransaction(${t.id})" class="text-rose-500 hover:text-rose-700 p-1" title="Hapus Transaksi">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
+                                ${deleteBtnHtml}
                             </div>
                         </td>
                     </tr>
