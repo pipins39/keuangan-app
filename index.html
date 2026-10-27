@@ -841,11 +841,13 @@
         }
 
         function deleteTransaction(id) {
-            if(!confirm("Yakin ingin menghapus transaksi ini?")) return;
+            if(!confirm("Yakin ingin menghapus transaksi ini? Saldo dompet/tabungan akan dikembalikan.")) return;
             const txIndex = transactions.findIndex(t => t.id === id);
             if(txIndex > -1) {
                 const tx = transactions[txIndex];
+                
                 revertTxBalance(tx);
+                
                 transactions.splice(txIndex, 1);
                 
                 populateWalletOptions();
@@ -855,7 +857,8 @@
                 postToSheets({ action: "deleteTransaction", id: id });
                 postToSheets({ action: "syncWallets", wallets: wallets });
                 postToSheets({ action: "syncSavings", savings: savings });
-                alert("Transaksi berhasil dihapus dari sistem!");
+                
+                alert("Transaksi berhasil dihapus dan saldo telah dikembalikan!");
             }
         }
 
