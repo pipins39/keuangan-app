@@ -521,7 +521,7 @@
         }
 
         function formatWalletKey(id) {
-            const strId = String(id);
+            const strId = String(id || '');
             if (strId.startsWith("W_") || strId.startsWith("S_")) return strId;
             return "W_" + strId;
         }
@@ -532,6 +532,20 @@
             const isSaving = str.startsWith("S_");
             const cleanId = parseInt(str.replace("W_", "").replace("S_", ""));
             return { isSaving, id: cleanId };
+        }
+
+        function getWalletOrSavingByName(nameStr) {
+            if (!nameStr) return null;
+            const isSaving = String(nameStr).includes("[Tabungan]");
+            const cleanName = String(nameStr).replace("[Tabungan]", "").trim();
+            if (isSaving) {
+                const found = savings.find(s => s.name.trim() === cleanName);
+                if (found) return { isSaving: true, obj: found, key: "S_" + found.id };
+            } else {
+                const found = wallets.find(w => w.name.trim() === cleanName);
+                if (found) return { isSaving: false, obj: found, key: "W_" + found.id };
+            }
+            return null;
         }
 
         function loadOnlineData() {
@@ -573,17 +587,30 @@
                     }
 
                     if(data.transactions) {
-                        transactions = data.transactions.map(t => ({
-                            id: parseInt(t.ID),
-                            date: String(t.Tanggal).slice(0, 10),
-                            type: t.Jenis,
-                            owner: t.Pemilik,
-                            category: t.Kategori,
-                            walletId: formatWalletKey(t.Dompet),
-                            targetWalletId: t.DompetTujuan ? formatWalletKey(t.DompetTujuan) : null,
-                            amount: parseFloat(t.Nominal),
-                            note: t.Keterangan
-                        }));
+                        transactions = data.transactions.map(t => {
+                            let wKey = formatWalletKey(t.Dompet);
+                            let tKey = t.DompetTujuan ? formatWalletKey(t.DompetTujuan) : null;
+                            
+                            const matchW = getWalletOrSavingByName(t.Dompet);
+                            if (matchW) wKey = matchW.key;
+                            
+                            if (t.DompetTujuan) {
+                                const matchT = getWalletOrSavingByName(t.DompetTujuan);
+                                if (matchT) tKey = matchT.key;
+                            }
+
+                            return {
+                                id: parseInt(t.ID),
+                                date: String(t.Tanggal).slice(0, 10),
+                                type: t.Jenis,
+                                owner: t.Pemilik,
+                                category: t.Kategori,
+                                walletId: wKey,
+                                targetWalletId: tKey,
+                                amount: parseFloat(t.Nominal),
+                                note: t.Keterangan
+                            };
+                        });
                     }
 
                     const savedSession = localStorage.getItem('fin_session');
