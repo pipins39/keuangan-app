@@ -508,13 +508,39 @@
         let isEditingTx = false;
         let chartInstance = null;
 
+        function getTodayDateString() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function formatDateString(rawDateStr) {
+            if (!rawDateStr) return '';
+            const str = String(rawDateStr).trim();
+            if (str.length >= 10 && str.charAt(4) === '-' && str.charAt(7) === '-') {
+                return str.slice(0, 10);
+            }
+            const d = new Date(rawDateStr);
+            if (isNaN(d.getTime())) return str;
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
         window.onload = function() {
-            const today = new Date().toISOString().slice(0, 10);
-            document.getElementById('txDate').value = today;
-            document.getElementById('debtDate').value = today;
+            setDefaultDatesToToday();
             initMonthYearDropdowns();
             loadOnlineData();
         };
+
+        function setDefaultDatesToToday() {
+            const today = getTodayDateString();
+            document.getElementById('txDate').value = today;
+            document.getElementById('debtDate').value = today;
+        }
 
         function showLoading(show) {
             document.getElementById('loadingOverlay').classList.toggle('hidden', !show);
@@ -564,7 +590,7 @@
                             type: d.Type,
                             person: d.Person,
                             amount: parseFloat(d.Amount),
-                            date: String(d.Date).slice(0, 10),
+                            date: formatDateString(d.Date),
                             sourceType: d.SourceType || 'WALLET',
                             sourceId: parseInt(d.SourceId),
                             sourceName: d.SourceName,
@@ -601,7 +627,7 @@
 
                             return {
                                 id: parseInt(t.ID),
-                                date: String(t.Tanggal).slice(0, 10),
+                                date: formatDateString(t.Tanggal),
                                 type: t.Jenis,
                                 owner: t.Pemilik,
                                 category: t.Kategori,
@@ -965,6 +991,7 @@
             document.getElementById('submitTxBtn').textContent = "Simpan Transaksi";
             document.getElementById('cancelTxBtn').classList.add('hidden');
             
+            setDefaultDatesToToday();
             populateWalletOptions();
             updateDashboard();
             renderSavings();
@@ -975,7 +1002,7 @@
             const periodType = document.getElementById('filterPeriodType').value;
             const selMonth = parseInt(document.getElementById('filterMonth').value);
             const selYear = parseInt(document.getElementById('filterYear').value);
-            const currentMonthStr = new Date().toISOString().slice(0, 7);
+            const currentMonthStr = getTodayDateString().slice(0, 7);
 
             const editBadge = document.getElementById('editNoticeBadge');
             if (editBadge) editBadge.classList.toggle('hidden', !isEditingTx);
@@ -984,10 +1011,18 @@
                 const matchOwner = ownerFilter === 'ALL' || t.owner === ownerFilter;
                 let matchPeriod = true;
                 if (t.date) {
-                    if (periodType === 'THIS_MONTH') matchPeriod = t.date.startsWith(currentMonthStr);
-                    else if (periodType === 'SPECIFIC_MONTH') {
-                        const d = new Date(t.date);
-                        matchPeriod = (d.getMonth() === selMonth && d.getFullYear() === selYear);
+                    if (periodType === 'THIS_MONTH') {
+                        matchPeriod = t.date.startsWith(currentMonthStr);
+                    } else if (periodType === 'SPECIFIC_MONTH') {
+                        const parts = t.date.split('-');
+                        if (parts.length === 3) {
+                            const txYear = parseInt(parts[0]);
+                            const txMonth = parseInt(parts[1]) - 1;
+                            matchPeriod = (txMonth === selMonth && txYear === selYear);
+                        } else {
+                            const d = new Date(t.date);
+                            matchPeriod = (d.getMonth() === selMonth && d.getFullYear() === selYear);
+                        }
                     }
                 }
                 return matchOwner && matchPeriod;
@@ -1222,7 +1257,15 @@
             grid.innerHTML = customExpenseCategories.map(cat => {
                 const limit = activeBudgetMap[cat] || 0;
                 const spent = transactions
-                    .filter(t => t.type === 'EXPENSE' && t.category === cat && t.date && new Date(t.date).getMonth() === selMonth && new Date(t.date).getFullYear() === selYear)
+                    .filter(t => {
+                        if (t.type !== 'EXPENSE' || t.category !== cat || !t.date) return false;
+                        const parts = t.date.split('-');
+                        if (parts.length === 3) {
+                            return (parseInt(parts[1]) - 1 === selMonth && parseInt(parts[0]) === selYear);
+                        }
+                        const d = new Date(t.date);
+                        return (d.getMonth() === selMonth && d.getFullYear() === selYear);
+                    })
                     .reduce((acc, t) => acc + t.amount, 0);
 
                 const percent = limit > 0 ? (spent / limit) * 100 : 0;
@@ -1346,6 +1389,7 @@
             document.getElementById('debtPerson').value = '';
             document.getElementById('debtAmount').value = '';
             document.getElementById('debtNote').value = '';
+            setDefaultDatesToToday();
 
             renderDebts();
             populateWalletOptions();
