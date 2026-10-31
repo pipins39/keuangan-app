@@ -505,7 +505,7 @@
         let customIncomeCategories = [];
         let debts = [];
 
-        let isEditingTx = false; // Penanda apakah sedang dalam mode edit transaksi
+        let isEditingTx = false;
         let chartInstance = null;
 
         window.onload = function() {
@@ -518,6 +518,20 @@
 
         function showLoading(show) {
             document.getElementById('loadingOverlay').classList.toggle('hidden', !show);
+        }
+
+        function formatWalletKey(id) {
+            const strId = String(id);
+            if (strId.startsWith("W_") || strId.startsWith("S_")) return strId;
+            return "W_" + strId;
+        }
+
+        function parseWalletKey(rawVal) {
+            if (!rawVal) return { isSaving: false, id: 0 };
+            const str = String(rawVal);
+            const isSaving = str.startsWith("S_");
+            const cleanId = parseInt(str.replace("W_", "").replace("S_", ""));
+            return { isSaving, id: cleanId };
         }
 
         function loadOnlineData() {
@@ -565,8 +579,8 @@
                             type: t.Jenis,
                             owner: t.Pemilik,
                             category: t.Kategori,
-                            walletId: String(t.Dompet),
-                            targetWalletId: t.DompetTujuan ? String(t.DompetTujuan) : null,
+                            walletId: formatWalletKey(t.Dompet),
+                            targetWalletId: t.DompetTujuan ? formatWalletKey(t.DompetTujuan) : null,
                             amount: parseFloat(t.Nominal),
                             note: t.Keterangan
                         }));
@@ -757,13 +771,11 @@
                 }
             }
 
-            const isSavingSource = rawWalletValue.startsWith("S_");
-            const sourceId = parseInt(rawWalletValue.replace("W_", "").replace("S_", ""));
-            let sourceName = "";
-            let sourceObj = isSavingSource ? savings.find(s => s.id === sourceId) : wallets.find(w => w.id === sourceId);
+            const parsedSource = parseWalletKey(rawWalletValue);
+            let sourceObj = parsedSource.isSaving ? savings.find(s => s.id === parsedSource.id) : wallets.find(w => w.id === parsedSource.id);
 
             if(!sourceObj) return alert("Sumber dana tidak ditemukan!");
-            sourceName = isSavingSource ? `[Tabungan] ${sourceObj.name}` : sourceObj.name;
+            const sourceName = parsedSource.isSaving ? `[Tabungan] ${sourceObj.name}` : sourceObj.name;
 
             let targetWalletName = "-";
             let categoryName = "Transfer / Mutasi";
@@ -773,15 +785,14 @@
                 const rawTargetValue = document.getElementById('txTargetWallet').value;
                 if (rawWalletValue === rawTargetValue) return alert("Sumber asal dan tujuan tidak boleh sama!");
                 
-                const isTargetSaving = rawTargetValue.startsWith("S_");
-                const targetId = parseInt(rawTargetValue.replace("W_", "").replace("S_", ""));
-                let targetObj = isTargetSaving ? savings.find(s => s.id === targetId) : wallets.find(w => w.id === targetId);
+                const parsedTarget = parseWalletKey(rawTargetValue);
+                let targetObj = parsedTarget.isSaving ? savings.find(s => s.id === parsedTarget.id) : wallets.find(w => w.id === parsedTarget.id);
 
                 if(!targetObj) return alert("Tujuan transfer tidak ditemukan!");
-                targetWalletName = isTargetSaving ? `[Tabungan] ${targetObj.name}` : targetObj.name;
+                targetWalletName = parsedTarget.isSaving ? `[Tabungan] ${targetObj.name}` : targetObj.name;
 
-                if(isSavingSource) sourceObj.current -= amount; else sourceObj.balance -= amount;
-                if(isTargetSaving) targetObj.current += amount; else targetObj.balance += amount;
+                if(parsedSource.isSaving) sourceObj.current -= amount; else sourceObj.balance -= amount;
+                if(parsedTarget.isSaving) targetObj.current += amount; else targetObj.balance += amount;
 
                 transactions.unshift({ id: txId, type: 'TRANSFER', owner, amount, category: 'Transfer / Mutasi', walletId: rawWalletValue, targetWalletId: rawTargetValue, date, note });
             } else {
@@ -789,15 +800,15 @@
                 if(!categoryName) return alert("Silakan buat kategori terlebih dahulu!");
 
                 if (type === 'EXPENSE') {
-                    if(isSavingSource) sourceObj.current -= amount; else sourceObj.balance -= amount;
+                    if(parsedSource.isSaving) sourceObj.current -= amount; else sourceObj.balance -= amount;
                 } else {
-                    if(isSavingSource) sourceObj.current += amount; else sourceObj.balance += amount;
+                    if(parsedSource.isSaving) sourceObj.current += amount; else sourceObj.balance += amount;
                 }
 
                 transactions.unshift({ id: txId, type, owner, amount, category: categoryName, walletId: rawWalletValue, date, note });
             }
             
-            isEditingTx = false; // Matikan mode edit setelah simpan berhasil
+            isEditingTx = false;
             document.getElementById('editTxId').value = ''; 
             resetTxForm();
             populateWalletOptions();
@@ -822,7 +833,7 @@
 
             const tx = transactions.find(t => t.id === id);
             if(tx) {
-                isEditingTx = true; // Aktifkan penanda mode edit
+                isEditingTx = true;
                 revertTxBalance(tx);
 
                 document.getElementById('editTxId').value = tx.id;
@@ -880,21 +891,19 @@
         }
 
         function revertTxBalance(tx) {
-            const isSavingSource = String(tx.walletId).startsWith("S_");
-            const sourceId = parseInt(String(tx.walletId).replace("W_", "").replace("S_", ""));
-            let sourceObj = isSavingSource ? savings.find(s => s.id === sourceId) : wallets.find(w => w.id === sourceId);
+            const parsedSource = parseWalletKey(tx.walletId);
+            let sourceObj = parsedSource.isSaving ? savings.find(s => s.id === parsedSource.id) : wallets.find(w => w.id === parsedSource.id);
 
             if(tx.type === 'TRANSFER') {
-                const isTargetSaving = String(tx.targetWalletId).startsWith("S_");
-                const targetId = parseInt(String(tx.targetWalletId).replace("W_", "").replace("S_", ""));
-                let targetObj = isTargetSaving ? savings.find(s => s.id === targetId) : wallets.find(w => w.id === targetId);
+                const parsedTarget = parseWalletKey(tx.targetWalletId);
+                let targetObj = parsedTarget.isSaving ? savings.find(s => s.id === parsedTarget.id) : wallets.find(w => w.id === parsedTarget.id);
 
-                if(sourceObj) { if(isSavingSource) sourceObj.current += tx.amount; else sourceObj.balance += tx.amount; }
-                if(targetObj) { if(isTargetSaving) targetObj.current -= tx.amount; else targetObj.balance -= tx.amount; }
+                if(sourceObj) { if(parsedSource.isSaving) sourceObj.current += tx.amount; else sourceObj.balance += tx.amount; }
+                if(targetObj) { if(parsedTarget.isSaving) targetObj.current -= tx.amount; else targetObj.balance -= tx.amount; }
             } else if(tx.type === 'EXPENSE') {
-                if(sourceObj) { if(isSavingSource) sourceObj.current += tx.amount; else sourceObj.balance += tx.amount; }
+                if(sourceObj) { if(parsedSource.isSaving) sourceObj.current += tx.amount; else sourceObj.balance += tx.amount; }
             } else if(tx.type === 'INCOME') {
-                if(sourceObj) { if(isSavingSource) sourceObj.current -= tx.amount; else sourceObj.balance -= tx.amount; }
+                if(sourceObj) { if(parsedSource.isSaving) sourceObj.current -= tx.amount; else sourceObj.balance -= tx.amount; }
             }
         }
 
@@ -904,26 +913,24 @@
             if(editId && isEditingTx) {
                 const tx = transactions.find(t => t.id === parseInt(editId));
                 if(tx) {
-                    const isSavingSource = String(tx.walletId).startsWith("S_");
-                    const sourceId = parseInt(String(tx.walletId).replace("W_", "").replace("S_", ""));
-                    let sourceObj = isSavingSource ? savings.find(s => s.id === sourceId) : wallets.find(w => w.id === sourceId);
+                    const parsedSource = parseWalletKey(tx.walletId);
+                    let sourceObj = parsedSource.isSaving ? savings.find(s => s.id === parsedSource.id) : wallets.find(w => w.id === parsedSource.id);
 
                     if(tx.type === 'TRANSFER') {
-                        const isTargetSaving = String(tx.targetWalletId).startsWith("S_");
-                        const targetId = parseInt(String(tx.targetWalletId).replace("W_", "").replace("S_", ""));
-                        let targetObj = isTargetSaving ? savings.find(s => s.id === targetId) : wallets.find(w => w.id === targetId);
+                        const parsedTarget = parseWalletKey(tx.targetWalletId);
+                        let targetObj = parsedTarget.isSaving ? savings.find(s => s.id === parsedTarget.id) : wallets.find(w => w.id === parsedTarget.id);
 
-                        if(sourceObj) { if(isSavingSource) sourceObj.current -= tx.amount; else sourceObj.balance -= tx.amount; }
-                        if(targetObj) { if(isTargetSaving) targetObj.current += tx.amount; else targetObj.balance += tx.amount; }
+                        if(sourceObj) { if(parsedSource.isSaving) sourceObj.current -= tx.amount; else sourceObj.balance -= tx.amount; }
+                        if(targetObj) { if(parsedTarget.isSaving) targetObj.current += tx.amount; else targetObj.balance += tx.amount; }
                     } else if(tx.type === 'EXPENSE') {
-                        if(sourceObj) { if(isSavingSource) sourceObj.current -= tx.amount; else sourceObj.balance -= tx.amount; }
+                        if(sourceObj) { if(parsedSource.isSaving) sourceObj.current -= tx.amount; else sourceObj.balance -= tx.amount; }
                     } else if(tx.type === 'INCOME') {
-                        if(sourceObj) { if(isSavingSource) sourceObj.current += tx.amount; else sourceObj.balance += tx.amount; }
+                        if(sourceObj) { if(parsedSource.isSaving) sourceObj.current += tx.amount; else sourceObj.balance += tx.amount; }
                     }
                 }
             }
 
-            isEditingTx = false; // Reset mode edit menjadi non-aktif
+            isEditingTx = false;
             document.getElementById('editTxId').value = '';
             document.getElementById('txAmount').value = '';
             document.getElementById('txNote').value = '';
@@ -943,7 +950,6 @@
             const selYear = parseInt(document.getElementById('filterYear').value);
             const currentMonthStr = new Date().toISOString().slice(0, 7);
 
-            // Tampilkan badge pemberitahuan jika sedang mode edit
             const editBadge = document.getElementById('editNoticeBadge');
             if (editBadge) editBadge.classList.toggle('hidden', !isEditingTx);
 
@@ -969,24 +975,21 @@
             document.getElementById('dashBalance').textContent = `Rp ${totalWalletBalance.toLocaleString('id-ID')}`;
 
             document.getElementById('txTableBody').innerHTML = filteredTx.map(t => {
-                const isSavingSource = String(t.walletId).startsWith("S_");
-                const sourceId = parseInt(String(t.walletId).replace("W_", "").replace("S_", ""));
-                let sourceObj = isSavingSource ? savings.find(s => s.id === sourceId) : wallets.find(w => w.id === sourceId);
+                const parsedSource = parseWalletKey(t.walletId);
+                let sourceObj = parsedSource.isSaving ? savings.find(s => s.id === parsedSource.id) : wallets.find(w => w.id === parsedSource.id);
 
-                let sourceDisplayName = sourceObj ? (isSavingSource ? `[Tabungan] ${sourceObj.name}` : sourceObj.name) : (t.walletId || '-');
+                let sourceDisplayName = sourceObj ? (parsedSource.isSaving ? `[Tabungan] ${sourceObj.name}` : sourceObj.name) : (t.walletId || '-');
 
                 if(t.type === 'TRANSFER' && t.targetWalletId) {
-                    const isTargetSaving = String(t.targetWalletId).startsWith("S_");
-                    const targetId = parseInt(String(t.targetWalletId).replace("W_", "").replace("S_", ""));
-                    let targetObj = isTargetSaving ? savings.find(s => s.id === targetId) : wallets.find(w => w.id === targetId);
-                    let targetDisplayName = targetObj ? (isTargetSaving ? `[Tabungan] ${targetObj.name}` : targetObj.name) : t.targetWalletId;
+                    const parsedTarget = parseWalletKey(t.targetWalletId);
+                    let targetObj = parsedTarget.isSaving ? savings.find(s => s.id === parsedTarget.id) : wallets.find(w => w.id === parsedTarget.id);
+                    let targetDisplayName = targetObj ? (parsedTarget.isSaving ? `[Tabungan] ${targetObj.name}` : targetObj.name) : t.targetWalletId;
                     sourceDisplayName = `${sourceDisplayName} ➔ ${targetDisplayName}`;
                 }
 
                 let amountText = `Rp ${t.amount.toLocaleString('id-ID')}`;
                 let amountColor = t.type === 'EXPENSE' ? 'text-rose-600' : (t.type === 'INCOME' ? 'text-emerald-600' : 'text-purple-600');
 
-                // Jika sedang mode edit, nonaktifkan tombol hapus pada tabel
                 const deleteBtnHtml = isEditingTx
                     ? `<button disabled class="text-slate-300 cursor-not-allowed p-1" title="Selesaikan edit terlebih dahulu"><i class="fa-solid fa-trash"></i></button>`
                     : `<button onclick="deleteTransaction(${t.id})" class="text-rose-500 hover:text-rose-700 p-1" title="Hapus Transaksi"><i class="fa-solid fa-trash"></i></button>`;
