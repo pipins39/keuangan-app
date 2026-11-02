@@ -602,8 +602,13 @@
                     if(data.budgets && data.budgets.length > 0) {
                         monthlyBudgets = {};
                         data.budgets.forEach(b => {
-                            if(!monthlyBudgets[b.PeriodKey]) monthlyBudgets[b.PeriodKey] = {};
-                            monthlyBudgets[b.PeriodKey][b.Category] = parseFloat(b.Amount);
+                            const pk = b.PeriodKey || b.periodKey;
+                            const cat = b.Category || b.category;
+                            const amt = parseFloat(b.Amount || b.amount || 0);
+                            if(pk && cat) {
+                                if(!monthlyBudgets[pk]) monthlyBudgets[pk] = {};
+                                monthlyBudgets[pk][cat] = amt;
+                            }
                         });
                     }
 
@@ -1320,7 +1325,6 @@
             });
 
             postToSheets({ action: "syncBudgets", budgets: budgetArr });
-            renderBudgeting();
         }
 
         function handleDebtSourceTypeChange() {
