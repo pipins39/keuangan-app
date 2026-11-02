@@ -266,23 +266,55 @@
                     </div>
                 </div>
 
+                <!-- RIWAYAT TRANSAKSI DENGAN FILTER TIAP KOLOM -->
                 <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
                     <div class="p-4 border-b border-slate-100 font-bold text-xs text-slate-700 flex justify-between items-center">
                         <span>Daftar Riwayat Transaksi</span>
-                        <span id="editNoticeBadge" class="hidden text-[11px] bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full font-semibold animate-pulse">
-                            ⚠️ Mode Edit Aktif (Hapus dinonaktifkan)
-                        </span>
+                        <div class="flex items-center gap-2">
+                            <button onclick="resetTableFilters()" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-600 px-2.5 py-1 rounded-md transition font-semibold">
+                                <i class="fa-solid fa-filter-circle-xmark"></i> Reset Filter Kolom
+                            </button>
+                            <span id="editNoticeBadge" class="hidden text-[11px] bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full font-semibold animate-pulse">
+                                ⚠️ Mode Edit Aktif
+                            </span>
+                        </div>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-xs text-slate-600">
                             <thead class="bg-slate-50 border-b border-slate-100 uppercase font-semibold text-slate-500">
                                 <tr>
-                                    <th class="p-3">Tanggal</th>
-                                    <th class="p-3">Pemilik</th>
-                                    <th class="p-3">Kategori & Keterangan</th>
-                                    <th class="p-3">Dompet/Tabungan</th>
-                                    <th class="p-3 text-right">Nominal</th>
-                                    <th class="p-3 text-center">Aksi</th>
+                                    <th class="p-3">
+                                        <div class="mb-1">Tanggal</div>
+                                        <input type="text" id="colFilterDate" onkeyup="updateDashboard()" placeholder="Cari tgl..." class="w-full text-[11px] font-normal border rounded px-1.5 py-0.5 outline-none bg-white">
+                                    </th>
+                                    <th class="p-3">
+                                        <div class="mb-1">Pemilik</div>
+                                        <select id="colFilterOwner" onchange="updateDashboard()" class="w-full text-[11px] font-normal border rounded px-1 py-0.5 outline-none bg-white">
+                                            <option value="">Semua</option>
+                                            <option value="Suami">Suami</option>
+                                            <option value="Istri">Istri</option>
+                                        </select>
+                                    </th>
+                                    <th class="p-3">
+                                        <div class="mb-1">Kategori & Ket.</div>
+                                        <input type="text" id="colFilterCat" onkeyup="updateDashboard()" placeholder="Cari ket/kat..." class="w-full text-[11px] font-normal border rounded px-1.5 py-0.5 outline-none bg-white">
+                                    </th>
+                                    <th class="p-3">
+                                        <div class="mb-1">Dompet/Tabungan</div>
+                                        <input type="text" id="colFilterWallet" onkeyup="updateDashboard()" placeholder="Cari dompet..." class="w-full text-[11px] font-normal border rounded px-1.5 py-0.5 outline-none bg-white">
+                                    </th>
+                                    <th class="p-3 text-right">
+                                        <div class="mb-1">Jenis / Nominal</div>
+                                        <select id="colFilterType" onchange="updateDashboard()" class="w-full text-[11px] font-normal border rounded px-1 py-0.5 outline-none bg-white">
+                                            <option value="">Semua Jenis</option>
+                                            <option value="EXPENSE">Pengeluaran</option>
+                                            <option value="INCOME">Pemasukan</option>
+                                            <option value="TRANSFER">Transfer</option>
+                                        </select>
+                                    </th>
+                                    <th class="p-3 text-center align-top">
+                                        <div class="mt-1">Aksi</div>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody id="txTableBody" class="divide-y divide-slate-100"></tbody>
@@ -602,8 +634,8 @@
                     if(data.budgets && data.budgets.length > 0) {
                         monthlyBudgets = {};
                         data.budgets.forEach(b => {
-                            const pk = b.PeriodKey || b.periodKey;
-                            const cat = b.Category || b.category;
+                            const pk = String(b.PeriodKey || b.periodKey || '').trim();
+                            const cat = String(b.Category || b.category || '').trim();
                             const amt = parseFloat(b.Amount || b.amount || 0);
                             if(pk && cat) {
                                 if(!monthlyBudgets[pk]) monthlyBudgets[pk] = {};
@@ -1002,12 +1034,28 @@
             renderSavings();
         }
 
+        function resetTableFilters() {
+            document.getElementById('colFilterDate').value = '';
+            document.getElementById('colFilterOwner').value = '';
+            document.getElementById('colFilterCat').value = '';
+            document.getElementById('colFilterWallet').value = '';
+            document.getElementById('colFilterType').value = '';
+            updateDashboard();
+        }
+
         function updateDashboard() {
             const ownerFilter = document.getElementById('filterOwner').value;
             const periodType = document.getElementById('filterPeriodType').value;
             const selMonth = parseInt(document.getElementById('filterMonth').value);
             const selYear = parseInt(document.getElementById('filterYear').value);
             const currentMonthStr = getTodayDateString().slice(0, 7);
+
+            // Filter Kolom Tabel
+            const fDate = (document.getElementById('colFilterDate')?.value || '').toLowerCase().trim();
+            const fOwner = (document.getElementById('colFilterOwner')?.value || '').toLowerCase().trim();
+            const fCat = (document.getElementById('colFilterCat')?.value || '').toLowerCase().trim();
+            const fWallet = (document.getElementById('colFilterWallet')?.value || '').toLowerCase().trim();
+            const fType = (document.getElementById('colFilterType')?.value || '').trim();
 
             const editBadge = document.getElementById('editNoticeBadge');
             if (editBadge) editBadge.classList.toggle('hidden', !isEditingTx);
@@ -1030,7 +1078,20 @@
                         }
                     }
                 }
-                return matchOwner && matchPeriod;
+
+                // Filter Spesifik Tiap Kolom
+                let matchColDate = !fDate || (t.date && t.date.toLowerCase().includes(fDate));
+                let matchColOwner = !fOwner || (t.owner && t.owner.toLowerCase().includes(fOwner));
+                let matchColCat = !fCat || (t.category && t.category.toLowerCase().includes(fCat)) || (t.note && t.note.toLowerCase().includes(fCat));
+                
+                const parsedSource = parseWalletKey(t.walletId);
+                let sourceObj = parsedSource.isSaving ? savings.find(s => s.id === parsedSource.id) : wallets.find(w => w.id === parsedSource.id);
+                let sourceName = sourceObj ? (parsedSource.isSaving ? `[Tabungan] ${sourceObj.name}` : sourceObj.name) : (t.walletId || '');
+                
+                let matchColWallet = !fWallet || sourceName.toLowerCase().includes(fWallet);
+                let matchColType = !fType || t.type === fType;
+
+                return matchOwner && matchPeriod && matchColDate && matchColOwner && matchColCat && matchColWallet && matchColType;
             });
 
             const totalIncome = filteredTx.filter(t => t.type === 'INCOME').reduce((acc, t) => acc + t.amount, 0);
