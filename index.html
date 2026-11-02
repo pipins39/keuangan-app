@@ -266,7 +266,6 @@
                     </div>
                 </div>
 
-                <!-- RIWAYAT TRANSAKSI DENGAN FILTER TIAP KOLOM -->
                 <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
                     <div class="p-4 border-b border-slate-100 font-bold text-xs text-slate-700 flex justify-between items-center">
                         <span>Daftar Riwayat Transaksi</span>
@@ -634,12 +633,14 @@
                     if(data.budgets && data.budgets.length > 0) {
                         monthlyBudgets = {};
                         data.budgets.forEach(b => {
-                            const pk = String(b.PeriodKey || b.periodKey || '').trim();
+                            let rawPk = String(b.PeriodKey || b.periodKey || '').trim();
+                            // Ambil format YYYY-MM murni jika berupa timestamp/date
+                            if (rawPk.length >= 7) rawPk = rawPk.slice(0, 7);
                             const cat = String(b.Category || b.category || '').trim();
                             const amt = parseFloat(b.Amount || b.amount || 0);
-                            if(pk && cat) {
-                                if(!monthlyBudgets[pk]) monthlyBudgets[pk] = {};
-                                monthlyBudgets[pk][cat] = amt;
+                            if(rawPk && cat) {
+                                if(!monthlyBudgets[rawPk]) monthlyBudgets[rawPk] = {};
+                                monthlyBudgets[rawPk][cat] = amt;
                             }
                         });
                     }
@@ -677,7 +678,13 @@
                     }
 
                     const savedSession = localStorage.getItem('fin_session');
-                    if(savedSession) { currentUser = JSON.parse(savedSession); showApp(); } else { showAuth(); }
+                    if(savedSession) { 
+                        currentUser = JSON.parse(savedSession); 
+                        showApp(); 
+                        renderBudgeting(); // Paksa render ulang target anggaran setelah fetch selesai
+                    } else { 
+                        showAuth(); 
+                    }
                 })
                 .catch(err => {
                     showLoading(false);
@@ -1050,7 +1057,6 @@
             const selYear = parseInt(document.getElementById('filterYear').value);
             const currentMonthStr = getTodayDateString().slice(0, 7);
 
-            // Filter Kolom Tabel
             const fDate = (document.getElementById('colFilterDate')?.value || '').toLowerCase().trim();
             const fOwner = (document.getElementById('colFilterOwner')?.value || '').toLowerCase().trim();
             const fCat = (document.getElementById('colFilterCat')?.value || '').toLowerCase().trim();
@@ -1079,7 +1085,6 @@
                     }
                 }
 
-                // Filter Spesifik Tiap Kolom
                 let matchColDate = !fDate || (t.date && t.date.toLowerCase().includes(fDate));
                 let matchColOwner = !fOwner || (t.owner && t.owner.toLowerCase().includes(fOwner));
                 let matchColCat = !fCat || (t.category && t.category.toLowerCase().includes(fCat)) || (t.note && t.note.toLowerCase().includes(fCat));
