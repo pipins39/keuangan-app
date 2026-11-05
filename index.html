@@ -266,12 +266,16 @@
                     </div>
                 </div>
 
+                <!-- DAFTAR TRANSAKSI DENGAN FILTER PER KOLOM & SUMMARY RINCIAN -->
                 <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-                    <div class="p-4 border-b border-slate-100 font-bold text-xs text-slate-700 flex justify-between items-center">
-                        <span>Daftar Riwayat Transaksi</span>
+                    <div class="p-4 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                        <div>
+                            <span class="font-bold text-xs text-slate-700">Daftar Riwayat Transaksi</span>
+                            <div id="filterCategorySummary" class="text-xs text-indigo-600 font-bold mt-0.5"></div>
+                        </div>
                         <div class="flex items-center gap-2">
                             <button onclick="resetTableFilters()" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-600 px-2.5 py-1 rounded-md transition font-semibold">
-                                <i class="fa-solid fa-filter-circle-xmark"></i> Reset Filter Kolom
+                                <i class="fa-solid fa-filter-circle-xmark"></i> Reset Semua Filter
                             </button>
                             <span id="editNoticeBadge" class="hidden text-[11px] bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full font-semibold animate-pulse">
                                 ⚠️ Mode Edit Aktif
@@ -295,12 +299,14 @@
                                         </select>
                                     </th>
                                     <th class="p-3">
-                                        <div class="mb-1">Kategori & Ket.</div>
-                                        <input type="text" id="colFilterCat" onkeyup="updateDashboard()" placeholder="Cari ket/kat..." class="w-full text-[11px] font-normal border rounded px-1.5 py-0.5 outline-none bg-white">
+                                        <div class="mb-1">Kategori Spesifik</div>
+                                        <select id="colFilterCategorySelect" onchange="updateDashboard()" class="w-full text-[11px] font-normal border rounded px-1 py-0.5 outline-none bg-white font-semibold text-indigo-600">
+                                            <option value="">-- Semua Kategori --</option>
+                                        </select>
                                     </th>
                                     <th class="p-3">
-                                        <div class="mb-1">Dompet/Tabungan</div>
-                                        <input type="text" id="colFilterWallet" onkeyup="updateDashboard()" placeholder="Cari dompet..." class="w-full text-[11px] font-normal border rounded px-1.5 py-0.5 outline-none bg-white">
+                                        <div class="mb-1">Keterangan / Dompet</div>
+                                        <input type="text" id="colFilterCat" onkeyup="updateDashboard()" placeholder="Cari ket/dompet..." class="w-full text-[11px] font-normal border rounded px-1.5 py-0.5 outline-none bg-white">
                                     </th>
                                     <th class="p-3 text-right">
                                         <div class="mb-1">Jenis / Nominal</div>
@@ -634,7 +640,6 @@
                         monthlyBudgets = {};
                         data.budgets.forEach(b => {
                             let rawPk = String(b.PeriodKey || b.periodKey || '').trim();
-                            // Ambil format YYYY-MM murni jika berupa timestamp/date
                             if (rawPk.length >= 7) rawPk = rawPk.slice(0, 7);
                             const cat = String(b.Category || b.category || '').trim();
                             const amt = parseFloat(b.Amount || b.amount || 0);
@@ -681,7 +686,7 @@
                     if(savedSession) { 
                         currentUser = JSON.parse(savedSession); 
                         showApp(); 
-                        renderBudgeting(); // Paksa render ulang target anggaran setelah fetch selesai
+                        renderBudgeting();
                     } else { 
                         showAuth(); 
                     }
@@ -786,6 +791,7 @@
             populateCategoryOptions();
             populateWalletOptions();
             populateSavingOptions();
+            populateFilterCategories();
             handleDebtSourceTypeChange();
             switchTab('dashboard');
         }
@@ -818,6 +824,24 @@
             document.getElementById('txCategory').innerHTML = categories.length > 0 
                 ? categories.map(c => `<option value="${c}">${c}</option>`).join('')
                 : '<option value="">-- Belum ada kategori --</option>';
+        }
+
+        function populateFilterCategories() {
+            const select = document.getElementById('colFilterCategorySelect');
+            if(!select) return;
+
+            let html = '<option value="">-- Semua Kategori --</option>';
+            if(customExpenseCategories.length > 0) {
+                html += '<optgroup label="Pengeluaran">';
+                customExpenseCategories.forEach(c => html += `<option value="${c}">${c}</option>`);
+                html += '</optgroup>';
+            }
+            if(customIncomeCategories.length > 0) {
+                html += '<optgroup label="Pemasukan">';
+                customIncomeCategories.forEach(c => html += `<option value="${c}">${c}</option>`);
+                html += '</optgroup>';
+            }
+            select.innerHTML = html;
         }
 
         function populateWalletOptions() {
@@ -1044,8 +1068,8 @@
         function resetTableFilters() {
             document.getElementById('colFilterDate').value = '';
             document.getElementById('colFilterOwner').value = '';
+            document.getElementById('colFilterCategorySelect').value = '';
             document.getElementById('colFilterCat').value = '';
-            document.getElementById('colFilterWallet').value = '';
             document.getElementById('colFilterType').value = '';
             updateDashboard();
         }
@@ -1055,50 +1079,68 @@
             const periodType = document.getElementById('filterPeriodType').value;
             const selMonth = parseInt(document.getElementById('filterMonth').value);
             const selYear = parseInt(document.getElementById('filterYear').value);
-            const currentMonthStr = getTodayDateString().slice(0, 7);
+            
+            const now = new Date();
+            const currYear = now.getFullYear();
+            const currMonth = now.getMonth();
 
+            // Filter Tabel & Kolom Spesifik
             const fDate = (document.getElementById('colFilterDate')?.value || '').toLowerCase().trim();
             const fOwner = (document.getElementById('colFilterOwner')?.value || '').toLowerCase().trim();
-            const fCat = (document.getElementById('colFilterCat')?.value || '').toLowerCase().trim();
-            const fWallet = (document.getElementById('colFilterWallet')?.value || '').toLowerCase().trim();
+            const fSelectedCat = (document.getElementById('colFilterCategorySelect')?.value || '').trim();
+            const fCatNote = (document.getElementById('colFilterCat')?.value || '').toLowerCase().trim();
             const fType = (document.getElementById('colFilterType')?.value || '').trim();
 
             const editBadge = document.getElementById('editNoticeBadge');
             if (editBadge) editBadge.classList.toggle('hidden', !isEditingTx);
 
             let filteredTx = transactions.filter(t => {
+                // Filter Pemilik
                 const matchOwner = ownerFilter === 'ALL' || t.owner === ownerFilter;
+
+                // Filter Periode Waktu Fleksibel
                 let matchPeriod = true;
                 if (t.date) {
-                    if (periodType === 'THIS_MONTH') {
-                        matchPeriod = t.date.startsWith(currentMonthStr);
-                    } else if (periodType === 'SPECIFIC_MONTH') {
-                        const parts = t.date.split('-');
-                        if (parts.length === 3) {
-                            const txYear = parseInt(parts[0]);
-                            const txMonth = parseInt(parts[1]) - 1;
-                            matchPeriod = (txMonth === selMonth && txYear === selYear);
-                        } else {
-                            const d = new Date(t.date);
-                            matchPeriod = (d.getMonth() === selMonth && d.getFullYear() === selYear);
+                    let dYear = -1, dMonth = -1;
+                    const parts = t.date.split('-');
+                    if (parts.length >= 3) {
+                        dYear = parseInt(parts[0]);
+                        dMonth = parseInt(parts[1]) - 1;
+                    } else {
+                        const d = new Date(t.date);
+                        if (!isNaN(d.getTime())) {
+                            dYear = d.getFullYear();
+                            dMonth = d.getMonth();
                         }
+                    }
+
+                    if (periodType === 'THIS_MONTH') {
+                        matchPeriod = (dMonth === currMonth && dYear === currYear);
+                    } else if (periodType === 'SPECIFIC_MONTH') {
+                        matchPeriod = (dMonth === selMonth && dYear === selYear);
                     }
                 }
 
+                // Filter Kolom Tabel
                 let matchColDate = !fDate || (t.date && t.date.toLowerCase().includes(fDate));
                 let matchColOwner = !fOwner || (t.owner && t.owner.toLowerCase().includes(fOwner));
-                let matchColCat = !fCat || (t.category && t.category.toLowerCase().includes(fCat)) || (t.note && t.note.toLowerCase().includes(fCat));
-                
+                let matchColCatSelect = !fSelectedCat || (t.category === fSelectedCat);
+
                 const parsedSource = parseWalletKey(t.walletId);
                 let sourceObj = parsedSource.isSaving ? savings.find(s => s.id === parsedSource.id) : wallets.find(w => w.id === parsedSource.id);
                 let sourceName = sourceObj ? (parsedSource.isSaving ? `[Tabungan] ${sourceObj.name}` : sourceObj.name) : (t.walletId || '');
                 
-                let matchColWallet = !fWallet || sourceName.toLowerCase().includes(fWallet);
+                let matchColCatNote = !fCatNote || 
+                    (t.category && t.category.toLowerCase().includes(fCatNote)) || 
+                    (t.note && t.note.toLowerCase().includes(fCatNote)) ||
+                    sourceName.toLowerCase().includes(fCatNote);
+
                 let matchColType = !fType || t.type === fType;
 
-                return matchOwner && matchPeriod && matchColDate && matchColOwner && matchColCat && matchColWallet && matchColType;
+                return matchOwner && matchPeriod && matchColDate && matchColOwner && matchColCatSelect && matchColCatNote && matchColType;
             });
 
+            // Hitung Total Pemasukan & Pengeluaran Ringkasan
             const totalIncome = filteredTx.filter(t => t.type === 'INCOME').reduce((acc, t) => acc + t.amount, 0);
             const totalExpense = filteredTx.filter(t => t.type === 'EXPENSE').reduce((acc, t) => acc + t.amount, 0);
             const totalWalletBalance = wallets.reduce((acc, w) => acc + w.balance, 0);
@@ -1107,7 +1149,17 @@
             document.getElementById('dashExpense').textContent = `Rp ${totalExpense.toLocaleString('id-ID')}`;
             document.getElementById('dashBalance').textContent = `Rp ${totalWalletBalance.toLocaleString('id-ID')}`;
 
-            document.getElementById('txTableBody').innerHTML = filteredTx.map(t => {
+            // Tampilkan Ringkasan Kategori Jika Dipilih
+            const summaryContainer = document.getElementById('filterCategorySummary');
+            if (fSelectedCat && summaryContainer) {
+                const catTotal = filteredTx.filter(t => t.category === fSelectedCat).reduce((a, b) => a + b.amount, 0);
+                summaryContainer.textContent = `📌 Total Kategori "${fSelectedCat}": Rp ${catTotal.toLocaleString('id-ID')} (${filteredTx.length} rincian transaksi)`;
+            } else if (summaryContainer) {
+                summaryContainer.textContent = `Menampilkan ${filteredTx.length} rincian transaksi`;
+            }
+
+            // Render Baris Tabel Transaksi
+            document.getElementById('txTableBody').innerHTML = filteredTx.length > 0 ? filteredTx.map(t => {
                 const parsedSource = parseWalletKey(t.walletId);
                 let sourceObj = parsedSource.isSaving ? savings.find(s => s.id === parsedSource.id) : wallets.find(w => w.id === parsedSource.id);
 
@@ -1129,13 +1181,13 @@
 
                 return `
                     <tr class="hover:bg-slate-50">
-                        <td class="p-3 text-slate-500">${t.date || '-'}</td>
+                        <td class="p-3 text-slate-500 font-medium">${t.date || '-'}</td>
                         <td class="p-3 font-semibold ${t.owner === 'Suami' ? 'text-indigo-600' : 'text-rose-600'}">${t.owner}</td>
+                        <td class="p-3 font-bold text-slate-800">${t.category}</td>
                         <td class="p-3">
-                            <div class="font-bold text-slate-800">${t.category}</div>
-                            <div class="text-[11px] text-slate-400">${t.note || '-'}</div>
+                            <div class="text-slate-700 font-semibold">${t.note || '-'}</div>
+                            <div class="text-[10px] text-slate-400 mt-0.5"><i class="fa-solid fa-wallet"></i> ${sourceDisplayName}</div>
                         </td>
-                        <td class="p-3 text-slate-500">${sourceDisplayName}</td>
                         <td class="p-3 text-right font-bold ${amountColor}">${amountText}</td>
                         <td class="p-3 text-center">
                             <div class="flex items-center justify-center gap-2">
@@ -1147,7 +1199,7 @@
                         </td>
                     </tr>
                 `;
-            }).join('');
+            }).join('') : `<tr><td colspan="6" class="text-center py-6 text-slate-400 text-xs">Tidak ada rincian transaksi yang cocok dengan filter ini.</td></tr>`;
 
             renderExpenseChart(filteredTx);
         }
@@ -1621,6 +1673,7 @@
             input.value = '';
             renderCategoriesManager();
             populateCategoryOptions();
+            populateFilterCategories();
         }
 
         function editCategory(type, idx) {
@@ -1631,6 +1684,7 @@
                 postToSheets({ action: "syncCategories", expCategories: customExpenseCategories, incCategories: customIncomeCategories });
                 renderCategoriesManager();
                 populateCategoryOptions();
+                populateFilterCategories();
             }
         }
 
@@ -1641,6 +1695,7 @@
             postToSheets({ action: "syncCategories", expCategories: customExpenseCategories, incCategories: customIncomeCategories });
             renderCategoriesManager();
             populateCategoryOptions();
+            populateFilterCategories();
         }
 
         function renderUsersTable() {
